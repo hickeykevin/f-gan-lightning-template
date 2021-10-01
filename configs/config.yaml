@@ -1,17 +1,26 @@
 # @package _global_
 
+#NOTE: WE MIGHT WANT TO HAVE THIS DEFAULT TO TRAINING THE ONE CLASS. 
+#THEN FOR WHEN WE WANT TO TRAIN F-GAN, WE CAN SPECIFY AN EXPERIMENT CONFIG FILE TO RUN 
+#THEREFORE, ALL CONFIGURATIONS FOR EACH DIRECTORY IS SPECIFIED FOR ONE-CLASS SPECIFIC CONFIGURATIONS
+#THEN WHEN WE WANT TO RUN F-GAN SPECIFIC CONFIGURATIONS, WE RUN EXPERIMENT FILES
+
 # specify here default training configuration
 defaults:
   - _self_
-  - trainer: default.yaml
-  - model: GAN.yaml
-  - datamodule: mnist_datamodule.yaml
-  - callbacks: wandb.yaml
+  - trainer: one_class.yaml                   #SPECIFYING ONE CLASS SPECIFIC TRAINER CONFIGS
+  - model: one_class.yaml                     #EXAMPLE: SPECIFYING ONE CLASS SPECIFIC MODEL CONFIGS
+  - datamodule: mnist_datamodule.yaml         #THIS WOULD BE ANY DATASET WE WANT TO USE AS DEFAULT
+  - callbacks: wandb.yaml                     #THIS HAS CONFIGS FOR ALL CALLBACKS THAT WE'VE CREATED IN THE src.callbacks.wandb_callbacks.py FILE
   - logger: wandb # set logger here or use command line (e.g. `python run.py logger=wandb`)
+  #NOT SURE IF THIS IS SUPPOSED TO BE wandb.yaml OR NOT, SINCE ALL THE ABOVE ARE???
 
-  - mode: default.yaml
+  - mode: default.yaml                        #THIS IS JUST A HANDY CONFIG IF ONE WANTS TO DEBUG, (RUN JUST A BATCH), RUN FULL, ETC. DOESN'T NEED TO BE EDITED
 
-  - experiment: null
+  #KEEP THIS NULL; REMEMBER THIS FILE IS JUST DEFAULT SETTINGS, WE CAN (AND PROBABLY SHOULD) SPECIFY AN EXPERIMENT RUN AT COMMAND LINE WHEN WE WANT TO EXPERIMENT
+  #WITH DIFFERENT VALUES OF HYPERPARAMTERS, ETC. THIS ACTION WILL OVERRIDE THIS "experiment: null" VALUE BELOW AND THEREFORE OVERRIDE ALL THE "defaults:" ABOVE TO   
+  #WHATEVER WE SPECIFY EACH ITEM (model, datamodule, etc) TO BE
+  - experiment: null                          
   - hparams_search: null
 
   # enable color logging
@@ -41,4 +50,4 @@ test_after_training: True
 seed: 42
 
 # name of the run, accessed by loggers
-name: f-gan_template_test
+name: one_class   #WHEN LOOKING AND WANDB, THIS IS NAME IT WILL USE

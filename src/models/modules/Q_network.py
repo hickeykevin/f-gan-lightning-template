@@ -12,7 +12,7 @@ class Q(nn.Module):
 
     #layers
     self.conv_bn_layer_1 = nn.Sequential(
-        nn.ConvTranspose2d(self.gf_dim*8, self.gf_dim*4, 4, stride=2, padding=1),
+        nn.ConvTranspose2d(self.gf_dim*8, self.gf_dim*4, 4, stride=2, padding=1, bias=False), #set bias to none/false for each layer
         nn.BatchNorm2d(self.gf_dim*4))
 
     self.conv_bn_layer_2 = nn.Sequential(

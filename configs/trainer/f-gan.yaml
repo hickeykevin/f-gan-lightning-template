@@ -1,12 +1,15 @@
-#NEED TO THINK, DO I NEED THIS DEFAULT, OR JUST SPLIT INTO TWO SEPERATE FOR EACH TRAINER? 
+#one class specific Trainer object configurations
+
 _target_: pytorch_lightning.Trainer
 
 # set `1` to train on GPU, `0` to train on CPU only
 gpus: 1
 
 min_epochs: 1
-max_epochs: 3
+max_epochs: 20
 
 weights_summary: null
 progress_bar_refresh_rate: 5
 resume_from_checkpoint: null
+
+#AND SO ON
