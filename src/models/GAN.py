@@ -7,12 +7,12 @@ from pytorch_lightning import LightningModule
 class LitFGAN(LightningModule):
   def __init__(
       self,
-      latent_dim: int = 100,
-      img_shape: tuple = (1, 28, 28),
-      num_classes: int = 10,
-      lr: float = 0.0002,
-      batch_size: int = batch_size,
-      chosen_divergence: str = "KLD",
+      latent_dim,
+      img_shape,
+      num_classes,
+      lr,
+      batch_size,
+      chosen_divergence,
       activations: dict = ACTIVATIONS,
       conjugates: dict = CONJUGATES
               ):
