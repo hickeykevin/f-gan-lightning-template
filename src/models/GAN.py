@@ -2,6 +2,7 @@ from src.models.modules.Q_network import Q
 from src.models.modules.V_network import V
 
 from src.models.modules.loss_modules import ACTIVATIONS, CONJUGATES, Q_loss, V_loss
+from pytorch_lightning import LightningModule
 
 class LitFGAN(LightningModule):
   def __init__(
