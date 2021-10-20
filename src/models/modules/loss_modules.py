@@ -1,5 +1,7 @@
 #main point
 #decaring activation and conjugate functions
+import torch
+from torch import nn
 ACTIVATIONS = {
     "KLD": lambda v: v,
     "RKL": lambda v: -torch.exp(-v),
