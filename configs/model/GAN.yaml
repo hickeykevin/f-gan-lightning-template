@@ -1,4 +1,4 @@
-_target_: src.models.mnist_model.MNISTLitModel
+_target_: src.models.mnist_model.GAN
 
 latent_dim: 100
 img_size: [1, 28, 28]
