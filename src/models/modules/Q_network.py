@@ -7,6 +7,7 @@ class Q(nn.Module):
     super(Q, self).__init__()
     self.gf_dim = 64
     self.df_dim = 64
+    self.latent_space = 100
     self.c_dim = 1
 
     #layers
@@ -25,7 +26,7 @@ class Q(nn.Module):
     self.tconv_layer = nn.ConvTranspose2d(self.gf_dim, self.c_dim, 4, stride=2, padding=1)
     
     self.projection_z = nn.Sequential(
-        nn.Linear(latent_space, 4*4*self.gf_dim*8),
+        nn.Linear(self.latent_space, 4*4*self.gf_dim*8),
         nn.BatchNorm1d(4*4*self.gf_dim*8)
     )
 
