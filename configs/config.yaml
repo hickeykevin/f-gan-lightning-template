@@ -4,10 +4,10 @@
 defaults:
   - _self_
   - trainer: default.yaml
-  - model: mnist_model.yaml
+  - model: GAN.yaml
   - datamodule: mnist_datamodule.yaml
-  - callbacks: default.yaml
-  - logger: null # set logger here or use command line (e.g. `python run.py logger=wandb`)
+  - callbacks: none.yaml
+  - logger: wandb # set logger here or use command line (e.g. `python run.py logger=wandb`)
 
   - mode: default.yaml
 
