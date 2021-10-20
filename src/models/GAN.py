@@ -4,15 +4,17 @@ from src.models.modules.V_network import V
 from src.models.modules.loss_modules import ACTIVATIONS, CONJUGATES, Q_loss, V_loss
 from pytorch_lightning import LightningModule
 
+import torch
+
 class LitFGAN(LightningModule):
   def __init__(
       self,
-      latent_dim,
-      img_shape,
-      num_classes,
-      lr,
-      batch_size,
-      chosen_divergence,
+      latent_dim: int = 100,
+      img_shape = [1, 28, 28],
+      num_classes: int = 10,
+      lr: float = 0.0002,
+      batch_size: int = 64,
+      chosen_divergence: str = "KLD",
       activations: dict = ACTIVATIONS,
       conjugates: dict = CONJUGATES
               ):
