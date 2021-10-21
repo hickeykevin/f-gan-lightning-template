@@ -249,7 +249,7 @@ class LogGeneratedImages(Callback):
         https://wandb.ai/wandb/wandb-lightning/reports/Image-Classification-using-PyTorch-Lightning--VmlldzoyODk1NzY
     """
 
-    def __init__(self, num_samples: int = 8):
+    def __init__(self, num_samples: int = 5):
         super().__init__()
         self.num_samples = num_samples
         self.ready = True
@@ -271,13 +271,14 @@ class LogGeneratedImages(Callback):
 
             # run the batch through the network
             generated_images = pl_module(validation_z)
+            generated_images_logging = (wandb.Image(x.squeeze()) for x in generated_images[:self.num_samples])
             #generated_images = make_grid(generated_images[:8])
 
             # log the images as wandb Image
             experiment.log(
                 {
                     f"Generated Images/{experiment.name}": [
-                        wandb.Image(x) for x in generated_images[:self.num_samples]
+                        x for x in generated_images_logging
                     ]
                 }
             )

@@ -29,7 +29,7 @@ class LitFGAN(LightningModule):
     self.chosen_divergence = chosen_divergence
     self.save_hyperparameters()
 
-    self.Q = Q(self.latent_dim, self.img_shape, self.num_classes)
+    self.Q = Q(self.latent_dim)
     self.V = V()
     self.validation_z = torch.randn(self.img_shape[0], self.latent_dim)
 
