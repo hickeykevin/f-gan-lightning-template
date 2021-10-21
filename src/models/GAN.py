@@ -6,6 +6,7 @@ from pytorch_lightning import LightningModule
 
 import torch
 from collections import OrderedDict
+from torchvision.utils import make_grid
 
 class LitFGAN(LightningModule):
   def __init__(
@@ -56,7 +57,6 @@ class LitFGAN(LightningModule):
           {
           "loss": loss_Q,
           "log": loss_Q,
-          "generated_examples": generated_images
           }
       )
       return output
@@ -93,10 +93,11 @@ class LitFGAN(LightningModule):
     return [optimizer_q, optimizer_v]
 
   def training_epoch_end(self, outputs):
-    tensorboard = self.logger.experiment
-    generated_images_outputs = outputs[0]["generated_examples"][:4]
-    tensorboard.add_images("generated_examples", generated_images_outputs)
-
+    pass
+    #wandb = self.logger.experiment[0]
+    #generated_images = make_grid(self(self.validation_z).to(device=pl_module.device)
+    #generated_images = wandb.Image(generated_images)
+    #wandb.add_images("generated_examples", generated_images_outputs)
 
 
     

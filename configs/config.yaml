@@ -6,8 +6,8 @@ defaults:
   - trainer: default.yaml
   - model: GAN.yaml
   - datamodule: mnist_datamodule.yaml
-  - callbacks: none.yaml
-  - logger: tensorboard # set logger here or use command line (e.g. `python run.py logger=wandb`)
+  - callbacks: wandb.yaml
+  - logger: wandb # set logger here or use command line (e.g. `python run.py logger=wandb`)
 
   - mode: default.yaml
 
@@ -41,4 +41,4 @@ test_after_training: True
 seed: 42
 
 # name of the run, accessed by loggers
-name: null
+name: f-gan_template_test

@@ -8,6 +8,7 @@ import torch
 import wandb
 from pytorch_lightning import Callback, Trainer
 from pytorch_lightning.loggers import LoggerCollection, WandbLogger
+from torchvision.utils import make_grid
 from pytorch_lightning.utilities import rank_zero_only
 from sklearn import metrics
 from sklearn.metrics import f1_score, precision_score, recall_score
@@ -242,7 +243,7 @@ class LogF1PrecRecHeatmap(Callback):
             self.targets.clear()
 
 
-class LogImagePredictions(Callback):
+class LogGeneratedImages(Callback):
     """Logs a validation batch and their predictions to wandb.
     Example adapted from:
         https://wandb.ai/wandb/wandb-lightning/reports/Image-Classification-using-PyTorch-Lightning--VmlldzoyODk1NzY
@@ -260,30 +261,23 @@ class LogImagePredictions(Callback):
         """Start executing this callback only after all validation sanity checks end."""
         self.ready = True
 
-    def on_validation_epoch_end(self, trainer, pl_module):
+    def on_train_epoch_end(self, trainer, pl_module):
         if self.ready:
             logger = get_wandb_logger(trainer=trainer)
             experiment = logger.experiment
-
-            # get a validation batch from the validation dat loader
-            val_samples = next(iter(trainer.datamodule.val_dataloader()))
-            val_imgs, val_labels = val_samples
+            validation_z = torch.randn(
+              pl_module.batch_size, 
+              pl_module.latent_dim).to(device=pl_module.device)
 
             # run the batch through the network
-            val_imgs = val_imgs.to(device=pl_module.device)
-            logits = pl_module(val_imgs)
-            preds = torch.argmax(logits, dim=-1)
+            generated_images = pl_module(validation_z)
+            #generated_images = make_grid(generated_images[:8])
 
             # log the images as wandb Image
             experiment.log(
                 {
-                    f"Images/{experiment.name}": [
-                        wandb.Image(x, caption=f"Pred:{pred}, Label:{y}")
-                        for x, pred, y in zip(
-                            val_imgs[: self.num_samples],
-                            preds[: self.num_samples],
-                            val_labels[: self.num_samples],
-                        )
+                    f"Generated Images/{experiment.name}": [
+                        wandb.Image(x) for x in generated_images[:self.num_samples]
                     ]
                 }
             )

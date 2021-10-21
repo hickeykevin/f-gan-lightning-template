@@ -15,12 +15,8 @@ upload_ckpts_as_artifact:
   ckpt_dir: "checkpoints/"
   upload_best_only: True
 
-log_f1_precision_recall_heatmap:
-  _target_: src.callbacks.wandb_callbacks.LogF1PrecRecHeatmap
-
-log_confusion_matrix:
-  _target_: src.callbacks.wandb_callbacks.LogConfusionMatrix
-
-log_image_predictions:
-  _target_: src.callbacks.wandb_callbacks.LogImagePredictions
+log_generated_images:
+  _target_: src.callbacks.wandb_callbacks.LogGeneratedImages
   num_samples: 8
+
+
