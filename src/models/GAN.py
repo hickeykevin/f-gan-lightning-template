@@ -5,6 +5,7 @@ from src.models.modules.loss_modules import ACTIVATIONS, CONJUGATES, Q_loss, V_l
 from pytorch_lightning import LightningModule
 
 import torch
+from collections import OrderedDict
 
 class LitFGAN(LightningModule):
   def __init__(
