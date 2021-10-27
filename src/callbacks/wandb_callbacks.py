@@ -282,3 +282,15 @@ class LogGeneratedImages(Callback):
                     ]
                 }
             )
+
+class WatchModelFGan(Callback):
+    """Make wandb watch model at the beginning of the run."""
+
+    def __init__(self, log: str = "gradients", log_freq: int = 100):
+        self.log = log
+        self.log_freq = log_freq
+
+    @rank_zero_only
+    def on_train_start(self, trainer, pl_module):
+        logger = get_wandb_logger(trainer=trainer)
+        logger.watch(model=(pl_module.Q, pl_module.V), log=self.log, log_freq=self.log_freq)

@@ -24,6 +24,11 @@ log_generated_images:
   _target_: src.callbacks.wandb_callbacks.LogGeneratedImages
   num_samples: 8
 
+watch_model_f_gan:
+  _target_: src.callbacks.wandb_callbacks.WatchModelFGan
+  log: "all"
+  log_freq: 100
+
 #THEN WE MIGHT HAVE A CALLBACK FOR THE ONE-CLASS, LIKE ONE TO SHOW PREDICTIONS WITH CORRESPONDING EXAMPLES
 #one-class_log_predictions:
   #_target_: src.callbacks.wandb_callbakcs.OneClassLogPredictions
