@@ -1,0 +1,23 @@
+# @package _global_
+
+# to execute this experiment run:
+# python run.py experiment=f_gan_debug
+
+defaults:
+  - override /trainer: f_gan.yaml
+  - override /model: GAN.yaml
+  - override /datamodule: mnist_datamodule.yaml
+  - override /callbacks: wandb.yaml
+  - override /logger: wandb.yaml
+
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+
+seed: 42
+
+trainer:
+    min_epochs: 1
+    max_epochs: 5
+
+name: f_gan_debug
+
