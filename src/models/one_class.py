@@ -1,7 +1,7 @@
 #kevin's deep ocsvm translation into pytorch lightinng module
 import pytorch_lightning as pl
 import torch
-from src.models.modules.one_class_feedforward import FeedForwardNeuralNetwork
+from src.models.modules.one_class_feedforward import FeedforwardNeuralNetModel
 
 
 class LitDeepOCSVM(pl.LightningModule):
@@ -40,7 +40,8 @@ class LitDeepOCSVM(pl.LightningModule):
 
   
   def training_step(self, batch, batch_idx):
-      X = batch
+      X, _ = batch
+      X = X.reshape(-1, X.size()[-2] * X.size()[-1])
       f_X = self.forward(X)
 
       #walter's center defining logic
