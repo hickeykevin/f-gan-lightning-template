@@ -47,9 +47,9 @@ class LitFGAN(LightningModule):
     #train Q
     if optimizer_idx == 0:
       generated_images = self(z)
+      v_output_fake = self.V(generated_images)
 
-      #generated_images_labels = torch.ones(imgs.size[0], 1).type_as(images)
-      loss_Q = q_criterion(generated_images)
+      loss_Q = -v_criterion(v_output_fake)
 
       self.log("train/Q_loss", loss_Q, on_epoch=True)
 
@@ -63,12 +63,13 @@ class LitFGAN(LightningModule):
 
     #Train V
     elif optimizer_idx == 1:
+      
       #loss on real images
       v_real_imgs_output = self.V(imgs)
-      loss_real_imgs = v_criterion(v_real_imgs_output)
+      loss_real_imgs = -v_criterion(v_real_imgs_output)
 
       #loss on fake images
-      generated_images = self(z)
+      generated_images = self.forward(z)
       v_generated_imgs_output = self.V(generated_images)
       loss_generated_imgs = -q_criterion(v_generated_imgs_output)
 
