@@ -66,7 +66,7 @@ class LitFGAN(LightningModule):
       
       #loss on real images
       v_real_imgs_output = self.V(imgs)
-      loss_real_imgs = -v_criterion(v_real_imgs_output)
+      loss_real_imgs = v_criterion(v_real_imgs_output)
 
       #loss on fake images
       generated_images = self.forward(z)
