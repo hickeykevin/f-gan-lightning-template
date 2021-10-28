@@ -1,6 +1,7 @@
 #specify whatever configurations here
 
-_target_: src.models.one_class
+_target_: src.models.one_class.FeedforwardNeuralNetModel
 
-lr: 0.0002
-#and so on
+input_dim: 784
+hidden_dim: 64
+rep_dim: 1
