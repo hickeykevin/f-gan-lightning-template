@@ -49,7 +49,7 @@ class LitFGAN(LightningModule):
       generated_images = self(z)
       v_output_fake = self.V(generated_images)
 
-      loss_Q = -v_criterion(v_output_fake)
+      loss_Q = q_criterion(v_output_fake)
 
       self.log("train/Q_loss", loss_Q, on_epoch=True)
 

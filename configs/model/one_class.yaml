@@ -1,6 +1,6 @@
 #specify whatever configurations here
 
-_target_: src.models.one_class.FeedforwardNeuralNetModel
+_target_: src.models.one_class.LitDeepOCSVM
 
 input_dim: 784
 hidden_dim: 64
