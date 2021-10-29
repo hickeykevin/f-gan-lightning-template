@@ -6,7 +6,7 @@ from torchmetrics import AUROC
 
 
 class LitDeepOCSVM(pl.LightningModule):
-  def __init__(self, input_dim, hidden_dim, rep_dim, l2_weight = 0.01, lr = 1e-2):
+  def __init__(self, input_dim, hidden_dim, rep_dim, chosen_class, l2_weight = 0.01, lr = 1e-2):
     super().__init__()
 
     #keep same initialize parameters as walter
@@ -14,7 +14,7 @@ class LitDeepOCSVM(pl.LightningModule):
     self.input_dim = input_dim
     self.hidden_dim  = hidden_dim
     self.rep_dim  = rep_dim
-    self.num_classes = num_classes
+    self.chosen_class = chosen_class
     self.l2_weight = l2_weight
 
     #`batch_size` parameter moved to Lightning DataModule
@@ -47,9 +47,11 @@ class LitDeepOCSVM(pl.LightningModule):
 
   
   def training_step(self, batch, batch_idx):
+    #need to filter out those images that equal to chosen_class
       X, y = batch
+      X = X[y == self.chosen_class]
       X = X.reshape(-1, X.size()[-2] * X.size()[-1])
-      #y = torch.ones(X.size()[0])
+      y = torch.ones(X.size()[0])
 
       f_X = self.forward(X)
 
@@ -73,25 +75,20 @@ class LitDeepOCSVM(pl.LightningModule):
 
       #log the epoch level training loss to the progress bar
       self.log("train/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
-      self.log("train/auroc", self.auroc(f_X, y), on_step=False, on_epoch=True)
       
       return {"loss": loss}
 
   
   def validation_step(self, batch, batch_idx):
+      if not self.center:
+        self.
+    #EDIT TO HAVE ANY IMAGE NOT EQUAL TO SPECIFIED IMAGE HAVE LABEL OF 0
       X, y = batch
+      y[y!=7] = 0
+      y[y==7] = 1
       X = X.reshape(-1, X.size()[-2] * X.size()[-1])
-      #y = torch.ones(X.size()[0])
+      y = torch.ones(X.size()[0])
       f_X = self.forward(X)
-
-      #walter's center defining logic
-      if not self.center_defined:
-        #print('Defining C')
-        self.center_vec = torch.mean(f_X.detach(), dim=0)
-        #print(self.center_vec.shape)
-      self.center = self.center_vec.repeat(1,X.shape[0]) 
-      self.center = self.center.view(X.shape[0], -1)
-      self.center_defined = True
 
       #loss calculation; same as training step
       #MAKE THIS A SEPERATE FUNCTION/TORCHMETRIC?
@@ -102,13 +99,9 @@ class LitDeepOCSVM(pl.LightningModule):
       loss += self.l2_weight * l2_reg
 
       self.log("val/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
-      self.log("val/auroc", self.auroc(f_X, y), on_step=False, on_epoch=True)
+      self.log("val/auroc", self.auroc(f_X, y), on_step=True, on_epoch=True)
 
-      return {
-        "loss": loss,
-        "preds": f_X,
-        "targets": y}
-
+      return {"loss": loss}
 
   #walter's optimizer implementation, conveted into PL form
   def configure_optimizers(self):

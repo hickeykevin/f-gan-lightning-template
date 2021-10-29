@@ -48,3 +48,4 @@ plugins: null
 amp_backend: "native"
 amp_level: "O2"
 move_metrics_to_cpu: False
+num_sanity_val_steps: 2
