@@ -59,8 +59,8 @@ class LitDeepOCSVM(pl.LightningModule):
         #print('Defining C')
         self.center_vec = torch.mean(f_X_new.detach(), dim=0)
         #print(self.center_vec.shape)
-      self.center = self.center_vec.repeat(1,X.shape[0]) 
-      self.center = self.center.view(X.shape[0], -1)
+      self.center = self.center_vec.repeat(1,X_new.shape[0]) 
+      self.center = self.center.view(X_new.shape[0], -1)
       self.center_defined = True
 
       #loss calculation, same procedure as walter's implementation
