@@ -49,23 +49,22 @@ class LitDeepOCSVM(pl.LightningModule):
   def training_step(self, batch, batch_idx):
     #need to filter out those images that equal to chosen_class
       X, y = batch
-      X = X[y == self.chosen_class]
-      X = X.reshape(-1, X.size()[-2] * X.size()[-1])
-      y = torch.ones(X.size()[0])
+      X_new = X[y == self.chosen_class]
+      X_new = X_new.reshape(-1, X_new.size()[-2] * X_new.size()[-1])
 
-      f_X = self.forward(X)
+      f_X_new = self.forward(X_new)
 
       #walter's center defining logic
       if not self.center_defined:
         #print('Defining C')
-        self.center_vec = torch.mean(f_X.detach(), dim=0)
+        self.center_vec = torch.mean(f_X_new.detach(), dim=0)
         #print(self.center_vec.shape)
       self.center = self.center_vec.repeat(1,X.shape[0]) 
       self.center = self.center.view(X.shape[0], -1)
       self.center_defined = True
 
       #loss calculation, same procedure as walter's implementation
-      loss = torch.norm(f_X - self.center)
+      loss = torch.norm(f_X_new - self.center)
       l2_reg = torch.tensor(0.).to(self.device)
       for param in self.model.parameters():
         l2_reg += torch.norm(param)
@@ -80,8 +79,6 @@ class LitDeepOCSVM(pl.LightningModule):
 
   
   def validation_step(self, batch, batch_idx):
-      if not self.center:
-        self.
     #EDIT TO HAVE ANY IMAGE NOT EQUAL TO SPECIFIED IMAGE HAVE LABEL OF 0
       X, y = batch
       y[y!=7] = 0
