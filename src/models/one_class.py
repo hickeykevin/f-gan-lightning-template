@@ -6,7 +6,7 @@ from torchmetrics import AUROC
 
 
 class LitDeepOCSVM(pl.LightningModule):
-  def __init__(self, input_dim, hidden_dim, rep_dim, num_classes, l2_weight = 0.01, lr = 1e-2):
+  def __init__(self, input_dim, hidden_dim, rep_dim, l2_weight = 0.01, lr = 1e-2):
     super().__init__()
 
     #keep same initialize parameters as walter
@@ -33,7 +33,7 @@ class LitDeepOCSVM(pl.LightningModule):
     self.model = FeedforwardNeuralNetModel(input_dim = self.input_dim, hidden_dim = self.hidden_dim,
                                             rep_dim = self.rep_dim).to(self.device)
     self.center_defined = False
-    self.auroc = AUROC(num_classes=self.num_classes)
+    self.auroc = AUROC(num_classes=1)
     #self.conustion_matrix = ConfusionMatrix(num_classes=self.num_classes, normalize=True)
 
   
@@ -49,6 +49,8 @@ class LitDeepOCSVM(pl.LightningModule):
   def training_step(self, batch, batch_idx):
       X, y = batch
       X = X.reshape(-1, X.size()[-2] * X.size()[-1])
+      #y = torch.ones(X.size()[0])
+
       f_X = self.forward(X)
 
       #walter's center defining logic
@@ -70,32 +72,42 @@ class LitDeepOCSVM(pl.LightningModule):
 
 
       #log the epoch level training loss to the progress bar
-      self.log("train_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
-      self.log("train_auroc", self.auroc(f_X, y), on_step=False, on_epoch=True)
+      self.log("train/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+      self.log("train/auroc", self.auroc(f_X, y), on_step=False, on_epoch=True)
       
       return {"loss": loss}
 
   
   def validation_step(self, batch, batch_idx):
-    X, y = batch
-    X = X.reshape(-1, X.size()[-2] * X.size()[-1])
-    f_X = self.forward(X)
+      X, y = batch
+      X = X.reshape(-1, X.size()[-2] * X.size()[-1])
+      #y = torch.ones(X.size()[0])
+      f_X = self.forward(X)
 
-    #loss calculation; same as training step
-    #MAKE THIS A SEPERATE FUNCTION/TORCHMETRIC?
-    loss = torch.norm(f_X - self.center)
-    l2_reg = torch.tensor(0.).to(self.device)
-    for param in self.model.parameters():
-      l2_reg += torch.norm(param)
-    loss += self.l2_weight * l2_reg
+      #walter's center defining logic
+      if not self.center_defined:
+        #print('Defining C')
+        self.center_vec = torch.mean(f_X.detach(), dim=0)
+        #print(self.center_vec.shape)
+      self.center = self.center_vec.repeat(1,X.shape[0]) 
+      self.center = self.center.view(X.shape[0], -1)
+      self.center_defined = True
 
-    self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
-    self.log("val_auroc", self.auroc(f_X, y), on_step=False, on_epoch=True)
+      #loss calculation; same as training step
+      #MAKE THIS A SEPERATE FUNCTION/TORCHMETRIC?
+      loss = torch.norm(f_X - self.center)
+      l2_reg = torch.tensor(0.).to(self.device)
+      for param in self.model.parameters():
+        l2_reg += torch.norm(param)
+      loss += self.l2_weight * l2_reg
 
-    return {
-      "loss": loss,
-      "preds": f_X,
-      "targets": y}
+      self.log("val/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+      self.log("val/auroc", self.auroc(f_X, y), on_step=False, on_epoch=True)
+
+      return {
+        "loss": loss,
+        "preds": f_X,
+        "targets": y}
 
 
   #walter's optimizer implementation, conveted into PL form

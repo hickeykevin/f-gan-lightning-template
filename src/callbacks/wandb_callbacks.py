@@ -153,7 +153,7 @@ class LogConfusionMatrix(Callback):
             logger = get_wandb_logger(trainer)
             experiment = logger.experiment
 
-            preds = torch.cat(self.preds).cpu().numpy()
+            preds = torch.cat(self.preds).cpu().numpy().argmax(axis=1)
             targets = torch.cat(self.targets).cpu().numpy()
 
             confusion_matrix = metrics.confusion_matrix(y_true=targets, y_pred=preds)
