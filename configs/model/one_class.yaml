@@ -5,3 +5,4 @@ _target_: src.models.one_class.LitDeepOCSVM
 input_dim: 784
 hidden_dim: 64
 rep_dim: 1
+num_classes: 10

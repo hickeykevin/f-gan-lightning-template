@@ -2,10 +2,11 @@
 import pytorch_lightning as pl
 import torch
 from src.models.modules.one_class_feedforward import FeedforwardNeuralNetModel
+from torchmetrics import AUROC, ConfusionMatrix
 
 
 class LitDeepOCSVM(pl.LightningModule):
-  def __init__(self, input_dim, hidden_dim, rep_dim, l2_weight = 0.01, lr = 1e-2):
+  def __init__(self, input_dim, hidden_dim, rep_dim, num_classes, l2_weight = 0.01, lr = 1e-2):
     super().__init__()
 
     #keep same initialize parameters as walter
@@ -13,6 +14,7 @@ class LitDeepOCSVM(pl.LightningModule):
     self.input_dim = input_dim
     self.hidden_dim  = hidden_dim
     self.rep_dim  = rep_dim
+    self.num_classes = num_classes
     self.l2_weight = l2_weight
 
     #`batch_size` parameter moved to Lightning DataModule
@@ -31,6 +33,8 @@ class LitDeepOCSVM(pl.LightningModule):
     self.model = FeedforwardNeuralNetModel(input_dim = self.input_dim, hidden_dim = self.hidden_dim,
                                             rep_dim = self.rep_dim).to(self.device)
     self.center_defined = False
+    self.auroc = AUROC(num_classes=10)
+    #self.conustion_matrix = ConfusionMatrix(num_classes=self.num_classes, normalize=True)
 
   
   def forward(self, x):
@@ -40,7 +44,7 @@ class LitDeepOCSVM(pl.LightningModule):
 
   
   def training_step(self, batch, batch_idx):
-      X, _ = batch
+      X, y = batch
       X = X.reshape(-1, X.size()[-2] * X.size()[-1])
       f_X = self.forward(X)
 
@@ -61,8 +65,10 @@ class LitDeepOCSVM(pl.LightningModule):
       loss += self.l2_weight * l2_reg
       #can be converted into a torchmetric class; will look into it
 
+
       #log the epoch level training loss to the progress bar
       self.log("train_loss", loss, on_step=False, on_epoch=True, prog_bar=True)
+      self.log("train_auroc", self.auroc(f_X, y), on_step=False, on_epoch=True)
       
       return {"loss": loss}
 
