@@ -76,7 +76,28 @@ class LitDeepOCSVM(pl.LightningModule):
       return {"loss": loss}
 
   
-  def validation_step(self, batch, batch_idx)  
+  def validation_step(self, batch, batch_idx):
+    X, y = batch
+    X = X.reshape(-1, X.size()[-2] * X.size()[-1])
+    f_X = self.forward(X)
+
+    #loss calculation; same as training step
+    #MAKE THIS A SEPERATE FUNCTION/TORCHMETRIC?
+    loss = torch.norm(f_X - self.center)
+    l2_reg = torch.tensor(0.).to(self.device)
+    for param in self.model.parameters():
+      l2_reg += torch.norm(param)
+    loss += self.l2_weight * l2_reg
+
+    self.log("val_loss", loss, on_step=True, on_epoch=True, prog_bar=True)
+    self.log("val_auroc", self.auroc(f_X, y), on_step=False, on_epoch=True)
+
+    return {
+      "loss": loss,
+      "preds": f_X,
+      "targets": y}
+
+
   #walter's optimizer implementation, conveted into PL form
   def configure_optimizers(self):
       optimizer =  torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=0)
