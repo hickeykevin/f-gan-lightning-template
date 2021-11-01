@@ -47,8 +47,8 @@ class LitDeepOCSVM(pl.LightningModule):
 
   
   def training_step(self, batch, batch_idx):
-    #remember, these instances will be filtered to self.chosen_class
-    #already by the dataloader
+    #remember, these instances will be filtered to self.trainer.datamodule.chosen_class
+    #handled by the dataloader
       X, y = batch
       X = X.reshape(-1, X.size()[-2] * X.size()[-1])
 
@@ -85,15 +85,7 @@ class LitDeepOCSVM(pl.LightningModule):
       y[y == self.trainer.datamodule.chosen_class] = 1
       X = X.reshape(-1, X.size()[-2] * X.size()[-1])
       f_X = self.forward(X)
-
-      #walter's center defining logic
-      if not self.center_defined:
-        #print('Defining C')
-        self.center_vec = torch.mean(f_X.detach(), dim=0)
-        #print(self.center_vec.shape)
-      self.center = self.center_vec.repeat(1,X.shape[0]) 
-      self.center = self.center.view(X.shape[0], -1)
-      self.center_defined = True
+      print(f_X.size())
 
       #loss calculation; same as training step
       #MAKE THIS A SEPERATE FUNCTION/TORCHMETRIC?
