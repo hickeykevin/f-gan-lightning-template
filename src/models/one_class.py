@@ -79,7 +79,7 @@ class LitDeepOCSVM(pl.LightningModule):
 
   
   def validation_step(self, batch, batch_idx):
-    #EDIT TO HAVE ANY IMAGE NOT EQUAL TO SPECIFIED IMAGE HAVE LABEL OF 0
+      #any image not pertaining to self.chosen_class has label of 0
       X, y = batch
       y[y != self.chosen_class] = 0
       y[y == self.chosen_class] = 1
