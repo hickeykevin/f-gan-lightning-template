@@ -30,7 +30,7 @@ class MNISTDataModule(LightningDataModule):
         self,
         data_dir: str = "data/",
         train_one_class: bool = True,
-        train_val_test_split: Tuple[int, int, int] = (55_000, 5_000, 10_000),
+        train_val_test_split: Tuple[int, int] = (55000, 5000, 10000),
         batch_size: int = 64,
         num_workers: int = 0,
         pin_memory: bool = False,
@@ -73,16 +73,46 @@ class MNISTDataModule(LightningDataModule):
         The `stage` can be used to differentiate whether the `setup()` is called before trainer.fit()` or `trainer.test()`."""
         if self.data_train or not self.data_val or not self.data_test:
             trainset = MNIST(self.data_dir, train=True, transform=self.transforms)
+            testset = MNIST(self.data_dir, train=False, transform=self.transforms)
+            
             if self.train_one_class:
               indices = (torch.tensor(trainset.targets)[..., None] == self.chosen_class).any(-1).nonzero(as_tuple=True)[0]
               trainset = torch.utils.data.Subset(trainset, indices)
-              testset = MNIST(self.data_dir, train=False, transform=self.transforms)
               self.data_train = trainset
-              self.data_val = testset
-
+              self.data_val, self.data_test = random_split(
+                testset, 
+                (self.train_val_test_split[1], self.train_val_test_split[1]),
+                generator=torch.Generator().manual_seed(42)
+                                                          )
             else:
-              testset = MNIST(self.data_dir, train=False, transform=self.transforms)
               dataset = ConcatDataset(datasets=[trainset, testset])
               self.data_train, self.data_val, self.data_test = random_split(
                   dataset, self.train_val_test_split, generator=torch.Generator().manual_seed(42)
             )
+
+    def train_dataloader(self):
+        return DataLoader(
+            dataset=self.data_train,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            shuffle=True,
+        )
+
+    def val_dataloader(self):
+        return DataLoader(
+            dataset=self.data_val,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            shuffle=False,
+        )
+
+    def test_dataloader(self):
+        return DataLoader(
+            dataset=self.data_test,
+            batch_size=self.batch_size,
+            num_workers=self.num_workers,
+            pin_memory=self.pin_memory,
+            shuffle=False,
+        )
