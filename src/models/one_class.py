@@ -47,24 +47,24 @@ class LitDeepOCSVM(pl.LightningModule):
 
   
   def training_step(self, batch, batch_idx):
-    #need to filter out those images that equal to chosen_class
+    #remember, these instances will be filtered to self.chosen_class
+    #already by the dataloader
       X, y = batch
-      X_new = X[y == self.chosen_class]
-      X_new = X_new.reshape(-1, X_new.size()[-2] * X_new.size()[-1])
+      X = X.reshape(-1, X.size()[-2] * X.size()[-1])
 
-      f_X_new = self.forward(X_new)
+      f_X = self.forward(X)
 
       #walter's center defining logic
       if not self.center_defined:
         #print('Defining C')
-        self.center_vec = torch.mean(f_X_new.detach(), dim=0)
+        self.center_vec = torch.mean(f_X.detach(), dim=0)
         #print(self.center_vec.shape)
-      self.center = self.center_vec.repeat(1,X_new.shape[0]) 
-      self.center = self.center.view(X_new.shape[0], -1)
+      self.center = self.center_vec.repeat(1,X.shape[0]) 
+      self.center = self.center.view(X.shape[0], -1)
       self.center_defined = True
 
       #loss calculation, same procedure as walter's implementation
-      loss = torch.norm(f_X_new - self.center)
+      loss = torch.norm(f_X - self.center)
       l2_reg = torch.tensor(0.).to(self.device)
       for param in self.model.parameters():
         l2_reg += torch.norm(param)
@@ -81,10 +81,9 @@ class LitDeepOCSVM(pl.LightningModule):
   def validation_step(self, batch, batch_idx):
     #EDIT TO HAVE ANY IMAGE NOT EQUAL TO SPECIFIED IMAGE HAVE LABEL OF 0
       X, y = batch
-      y[y!=7] = 0
-      y[y==7] = 1
+      y[y != self.chosen_class] = 0
+      y[y == self.chosen_class] = 1
       X = X.reshape(-1, X.size()[-2] * X.size()[-1])
-      y = torch.ones(X.size()[0])
       f_X = self.forward(X)
 
       #loss calculation; same as training step
