@@ -85,8 +85,16 @@ class LitDeepOCSVM(pl.LightningModule):
       y[y == self.trainer.datamodule.chosen_class] = 1
       X = X.reshape(-1, X.size()[-2] * X.size()[-1])
       f_X = self.forward(X)
-      print(f_X.size())
-
+      
+      #walter's center defining logic
+      if not self.center_defined:
+        #print('Defining C')
+        self.center_vec = torch.mean(f_X.detach(), dim=0)
+        #print(self.center_vec.shape)
+      self.center = self.center_vec.repeat(1,X.shape[0]) 
+      self.center = self.center.view(X.shape[0], -1)
+      self.center_defined = True
+      
       #loss calculation; same as training step
       #MAKE THIS A SEPERATE FUNCTION/TORCHMETRIC?
       loss = torch.norm(f_X - self.center)
