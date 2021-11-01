@@ -82,8 +82,7 @@ class MNISTDataModule(LightningDataModule):
               self.data_val, self.data_test = random_split(
                 testset, 
                 (self.train_val_test_split[1], self.train_val_test_split[1]),
-                generator=torch.Generator().manual_seed(42)
-                                                          )
+                generator=torch.Generator().manual_seed(42))
             else:
               dataset = ConcatDataset(datasets=[trainset, testset])
               self.data_train, self.data_val, self.data_test = random_split(

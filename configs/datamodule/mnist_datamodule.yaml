@@ -1,7 +1,9 @@
-_target_: src.datamodules.mnist_datamodule.MNISTDataModule
+_target_: src.datamodules.one_class_mnist_datamodule.MNISTDataModule
 
 data_dir: ${data_dir} # data_dir is specified in config.yaml
+train_one_class: True
 batch_size: 64
 train_val_test_split: [55_000, 5_000, 10_000]
 num_workers: 0
 pin_memory: False
+chosen_class: 7
