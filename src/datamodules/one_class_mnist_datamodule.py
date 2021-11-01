@@ -4,6 +4,8 @@ from pytorch_lightning import LightningDataModule
 from torch.utils.data import ConcatDataset, DataLoader, Dataset, random_split
 from torchvision.datasets import MNIST
 from torchvision.transforms import transforms
+from torch.utils.data import Subset
+
 
 
 class MNISTDataModule(LightningDataModule):
@@ -27,18 +29,22 @@ class MNISTDataModule(LightningDataModule):
     def __init__(
         self,
         data_dir: str = "data/",
+        train_one_class: bool = True,
         train_val_test_split: Tuple[int, int, int] = (55_000, 5_000, 10_000),
         batch_size: int = 64,
         num_workers: int = 0,
         pin_memory: bool = False,
+        chosen_class: int = 7,
     ):
         super().__init__()
 
         self.data_dir = data_dir
+        self.train_one_class = train_one_class
         self.train_val_test_split = train_val_test_split
         self.batch_size = batch_size
         self.num_workers = num_workers
         self.pin_memory = pin_memory
+        self.chosen_class = chosen_class  
 
         self.transforms = transforms.Compose(
             [transforms.ToTensor(), transforms.Normalize((0.1307,), (0.3081,))]
@@ -65,11 +71,18 @@ class MNISTDataModule(LightningDataModule):
         """Load data. Set variables: `self.data_train`, `self.data_val`, `self.data_test`.
         This method is called by lightning separately when using `trainer.fit()` and `trainer.test()`!
         The `stage` can be used to differentiate whether the `setup()` is called before trainer.fit()` or `trainer.test()`."""
-        if not self.data_train or not self.data_val or not self.data_test:
+        if self.data_train or not self.data_val or not self.data_test:
             trainset = MNIST(self.data_dir, train=True, transform=self.transforms)
-            testset = MNIST(self.data_dir, train=False, transform=self.transforms)
-            dataset = ConcatDataset(datasets=[trainset, testset])
-            self.data_train, self.data_val, self.data_test = random_split(
-                dataset, self.train_val_test_split, generator=torch.Generator().manual_seed(42)
+            if self.train_one_class:
+              indices = (torch.tensor(trainset.targets)[..., None] == self.chosen_class).any(-1).nonzero(as_tuple=True)[0]
+              trainset = torch.utils.data.Subset(trainset, indices)
+              testset = MNIST(self.data_dir, train=False, transform=self.transforms)
+              self.data_train = trainset
+              self.data_val = testset
+
+            else:
+              testset = MNIST(self.data_dir, train=False, transform=self.transforms)
+              dataset = ConcatDataset(datasets=[trainset, testset])
+              self.data_train, self.data_val, self.data_test = random_split(
+                  dataset, self.train_val_test_split, generator=torch.Generator().manual_seed(42)
             )
-        
