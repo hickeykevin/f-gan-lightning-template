@@ -16,4 +16,8 @@ upload_ckpts_as_artifact:
   ckpt_dir: "checkpoints/"
   upload_best_only: True
 
+log_predictions:
+  _target_: src.callbacks.wandb_callbacks.LogOneClassPredictions
+  num_samples: 5
+
 

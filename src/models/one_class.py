@@ -2,7 +2,7 @@
 import pytorch_lightning as pl
 import torch
 from src.models.modules.one_class_feedforward import FeedforwardNeuralNetModel
-from torchmetrics import AUROC
+from torchmetrics import AUROC, F1
 
 
 class LitDeepOCSVM(pl.LightningModule):
@@ -33,6 +33,7 @@ class LitDeepOCSVM(pl.LightningModule):
                                             rep_dim = self.rep_dim).to(self.device)
     self.center_defined = False
     self.auroc = AUROC(num_classes=2, pos_label=1)
+    self.f1 = F1()
     #self.conustion_matrix = ConfusionMatrix(num_classes=self.num_classes, normalize=True)
 
   
@@ -105,7 +106,8 @@ class LitDeepOCSVM(pl.LightningModule):
 
       self.log("val/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
       self.log("val/auroc", self.auroc(f_X.reshape(-1, 1), y.reshape(-1, 1)), on_step=True, on_epoch=True)
-
+      self.log("val/f1", self.f1(f_X.reshape(-1, 1), y.reshape(-1, 1)), on_step=True, on_epoch=True)
+      
       return {"loss": loss}
 
   #walter's optimizer implementation, conveted into PL form
