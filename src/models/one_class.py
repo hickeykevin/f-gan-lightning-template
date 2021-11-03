@@ -34,7 +34,6 @@ class LitDeepOCSVM(pl.LightningModule):
     self.auroc = AUROC(num_classes=2, pos_label=1)
   
   def forward(self, x):
-      #same as feed forward network's forward method
       x = self.model.forward(x)
       score = torch.norm((x - self.center), dim=1)
       return score
@@ -80,7 +79,8 @@ class LitDeepOCSVM(pl.LightningModule):
       
       loss = self.loss_function(f_X)
 
-      #whether instances are close to center or not
+      #whether instances are close to center or not,
+      #make negative for auroc score to give meaningful representation
       score = -torch.norm((f_X - self.center), dim=1)
 
       self.log("val/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
@@ -102,6 +102,6 @@ class LitDeepOCSVM(pl.LightningModule):
 
   #walter's optimizer implementation, conveted into PL form
   def configure_optimizers(self):
-      optimizer =  torch.optim.Adam(self.parameters(), lr=self.lr, weight_decay=0)
+      optimizer =  torch.optim.Adam(self.model.parameters(), lr=self.lr, weight_decay=0)
       scheduler = torch.optim.lr_scheduler.ExponentialLR(optimizer, gamma=0.99)
       return ([optimizer], [scheduler])
