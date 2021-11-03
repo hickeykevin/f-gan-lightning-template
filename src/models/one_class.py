@@ -2,7 +2,7 @@
 import pytorch_lightning as pl
 import torch
 from src.models.modules.one_class_feedforward import FeedforwardNeuralNetModel
-from torchmetrics import AUROC, F1
+from torchmetrics import AUROC
 
 
 class LitDeepOCSVM(pl.LightningModule):
