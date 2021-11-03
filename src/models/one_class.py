@@ -39,21 +39,24 @@ class LitDeepOCSVM(pl.LightningModule):
       return x
 
   def on_train_start(self):
-    #define the center based on 1 pass through the data
-    #
-    batch = next(iter(self.trainer.train_dataloader()))
-    X, y = batch
-    X = X.reshape(-1, X.size()[-2] * X.size()[-1])
-    f_X = self.forward(X)
-    self.center_vec = torch.mean(f_X.detach(), dim=0)
-    self.center = self.center_vec.repeat(1,X.shape[0]) 
-    self.center = self.center.view(X.shape[0], -1)
+      #define the center based on 1 pass through the data
+
+      #get a batch of data from the datamodule
+      batch = next(iter(self.trainer.train_dataloader))
+      X, y = batch
+      X = X.reshape(-1, X.size()[-2] * X.size()[-1])
+      f_X = self.forward(X)
+
+      #define the center
+      self.center_vec = torch.mean(f_X.detach(), dim=0)
+      self.center = self.center_vec.repeat(1,X.shape[0]) 
+      self.center = self.center.view(X.shape[0], -1)
+      print(self.center.size())
 
 
-  
   def training_step(self, batch, batch_idx):
-    #remember, these instances will be filtered to self.trainer.datamodule.chosen_class
-    #handled by the dataloader
+      #remember, these instances will be filtered to self.trainer.datamodule.chosen_class
+      #handled by the dataloader
       X, y = batch
       X = X.reshape(-1, X.size()[-2] * X.size()[-1])
 

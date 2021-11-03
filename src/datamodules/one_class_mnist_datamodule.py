@@ -96,6 +96,7 @@ class MNISTDataModule(LightningDataModule):
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
             shuffle=True,
+            drop_last=True
         )
 
     def val_dataloader(self):
@@ -105,6 +106,7 @@ class MNISTDataModule(LightningDataModule):
             num_workers=self.num_workers,
             pin_memory=self.pin_memory,
             shuffle=False,
+            drop_last=True
         )
 
     def test_dataloader(self):
