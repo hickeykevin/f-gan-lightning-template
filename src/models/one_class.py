@@ -31,20 +31,24 @@ class LitDeepOCSVM(pl.LightningModule):
     
     self.model = FeedforwardNeuralNetModel(input_dim = self.input_dim, hidden_dim = self.hidden_dim,
                                             rep_dim = self.rep_dim).to(self.device)
-    self.center_defined = False
     self.auroc = AUROC(num_classes=2, pos_label=1)
-    self.f1 = F1()
-    #self.conustion_matrix = ConfusionMatrix(num_classes=self.num_classes, normalize=True)
-
   
   def forward(self, x):
       #same as feed forward network's forward method
       x = self.model.forward(x)
       return x
-  
+
   def on_train_start(self):
-    pass
-    
+    #define the center based on 1 pass through the data
+    #
+    batch = next(iter(self.trainer.train_dataloader()))
+    X, y = batch
+    X = X.reshape(-1, X.size()[-2] * X.size()[-1])
+    f_X = self.forward(X)
+    self.center_vec = torch.mean(f_X.detach(), dim=0)
+    self.center = self.center_vec.repeat(1,X.shape[0]) 
+    self.center = self.center.view(X.shape[0], -1)
+
 
   
   def training_step(self, batch, batch_idx):
@@ -54,15 +58,6 @@ class LitDeepOCSVM(pl.LightningModule):
       X = X.reshape(-1, X.size()[-2] * X.size()[-1])
 
       f_X = self.forward(X)
-
-      #walter's center defining logic
-      if not self.center_defined:
-        #print('Defining C')
-        self.center_vec = torch.mean(f_X.detach(), dim=0)
-        #print(self.center_vec.shape)
-      self.center = self.center_vec.repeat(1,X.shape[0]) 
-      self.center = self.center.view(X.shape[0], -1)
-      self.center_defined = True
 
       #loss calculation, same procedure as walter's implementation
       loss = torch.norm(f_X - self.center)
@@ -87,15 +82,6 @@ class LitDeepOCSVM(pl.LightningModule):
       X = X.reshape(-1, X.size()[-2] * X.size()[-1])
       f_X = self.forward(X)
       
-      #walter's center defining logic
-      if not self.center_defined:
-        #print('Defining C')
-        self.center_vec = torch.mean(f_X.detach(), dim=0)
-        #print(self.center_vec.shape)
-      self.center = self.center_vec.repeat(1,X.shape[0]) 
-      self.center = self.center.view(X.shape[0], -1)
-      self.center_defined = True
-      
       #loss calculation; same as training step
       #MAKE THIS A SEPERATE FUNCTION/TORCHMETRIC?
       loss = torch.norm(f_X - self.center)
@@ -104,9 +90,12 @@ class LitDeepOCSVM(pl.LightningModule):
         l2_reg += torch.norm(param)
       loss += self.l2_weight * l2_reg
 
+      #whether instances are close to center or not
+      score = -torch.norm((f_X - self.center), dim=1)
+
       self.log("val/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
-      self.log("val/auroc", self.auroc(f_X.reshape(-1, 1), y.reshape(-1, 1)), on_step=True, on_epoch=True)
-      self.log("val/f1", self.f1(f_X.reshape(-1, 1), y.reshape(-1, 1)), on_step=True, on_epoch=True)
+      self.log("val/auroc", self.auroc(score, y), on_step=True, on_epoch=True)
+      #self.log("val/f1", self.f1(f_X.reshape(-1, 1), y.reshape(-1, 1)), on_step=True, on_epoch=True)
       
       return {"loss": loss}
 
