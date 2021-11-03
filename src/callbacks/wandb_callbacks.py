@@ -274,7 +274,7 @@ class LogOneClassPredictions(Callback):
         # run the batch through the network
         val_imgs = val_imgs.to(device=pl_module.device)
         val_imgs_reshape = val_imgs.reshape(-1, val_imgs.size()[-2] * val_imgs.size()[-1])
-        logits = pl_module(val_imgs_reshape)
+        scores = pl_module.forward(val_imgs_reshape)
         #preds = torch.argmax(logits, dim=-1)
 
         # log the images as wandb Image
@@ -284,7 +284,7 @@ class LogOneClassPredictions(Callback):
                     wandb.Image(x, caption=f"Pred:{pred}, Label:{y}")
                     for x, pred, y in zip(
                         val_imgs[: self.num_samples],
-                        logits[: self.num_samples],
+                        scores[: self.num_samples],
                         val_labels[: self.num_samples],
                     )
                 ]

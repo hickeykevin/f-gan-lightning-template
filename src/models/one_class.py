@@ -36,22 +36,22 @@ class LitDeepOCSVM(pl.LightningModule):
   def forward(self, x):
       #same as feed forward network's forward method
       x = self.model.forward(x)
-      return x
+      score = torch.norm((x - self.center), dim=1)
+      return score
 
   def on_train_start(self):
       #define the center based on 1 pass through the data
 
-      #get a batch of data from the datamodule
+      #get self.model output on batch of data from the datamodule
       batch = next(iter(self.trainer.train_dataloader))
       X, y = batch
       X = X.reshape(-1, X.size()[-2] * X.size()[-1])
-      f_X = self.forward(X)
+      f_X = self.model.forward(X)
 
       #define the center
       self.center_vec = torch.mean(f_X.detach(), dim=0)
       self.center = self.center_vec.repeat(1,X.shape[0]) 
       self.center = self.center.view(X.shape[0], -1)
-      print(self.center.size())
 
 
   def training_step(self, batch, batch_idx):
@@ -59,17 +59,10 @@ class LitDeepOCSVM(pl.LightningModule):
       #handled by the dataloader
       X, y = batch
       X = X.reshape(-1, X.size()[-2] * X.size()[-1])
+      f_X = self.model.forward(X)
 
-      f_X = self.forward(X)
-
-      #loss calculation, same procedure as walter's implementation
-      loss = torch.norm(f_X - self.center)
-      l2_reg = torch.tensor(0.).to(self.device)
-      for param in self.model.parameters():
-        l2_reg += torch.norm(param)
-      loss += self.l2_weight * l2_reg
+      loss = self.loss_function(f_X)
       #can be converted into a torchmetric class; will look into it
-
 
       #log the epoch level training loss to the progress bar
       self.log("train/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
@@ -83,15 +76,9 @@ class LitDeepOCSVM(pl.LightningModule):
       y[y != self.trainer.datamodule.chosen_class] = 0
       y[y == self.trainer.datamodule.chosen_class] = 1
       X = X.reshape(-1, X.size()[-2] * X.size()[-1])
-      f_X = self.forward(X)
+      f_X = self.model.forward(X)
       
-      #loss calculation; same as training step
-      #MAKE THIS A SEPERATE FUNCTION/TORCHMETRIC?
-      loss = torch.norm(f_X - self.center)
-      l2_reg = torch.tensor(0.).to(self.device)
-      for param in self.model.parameters():
-        l2_reg += torch.norm(param)
-      loss += self.l2_weight * l2_reg
+      loss = self.loss_function(f_X)
 
       #whether instances are close to center or not
       score = -torch.norm((f_X - self.center), dim=1)
@@ -101,6 +88,17 @@ class LitDeepOCSVM(pl.LightningModule):
       #self.log("val/f1", self.f1(f_X.reshape(-1, 1), y.reshape(-1, 1)), on_step=True, on_epoch=True)
       
       return {"loss": loss}
+
+  def loss_function(self, f_X):
+      #loss calculation, same procedure as walter's implementation
+      loss = torch.norm(f_X - self.center)
+      l2_reg = torch.tensor(0.).to(self.device)
+      for param in self.model.parameters():
+        l2_reg += torch.norm(param)
+      loss += self.l2_weight * l2_reg
+
+      return loss
+
 
   #walter's optimizer implementation, conveted into PL form
   def configure_optimizers(self):
