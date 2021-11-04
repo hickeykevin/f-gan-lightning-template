@@ -7,7 +7,7 @@ defaults:
   - override /trainer: one_class.yaml
   - override /model: one_class.yaml
   - override /datamodule: mnist_datamodule.yaml
-  - override /callbacks: default.yaml
+  - override /callbacks: wandb_one_class.yaml
 
 trainer:
   min_epochs: 1

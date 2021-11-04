@@ -281,8 +281,8 @@ class LogOneClassPredictions(Callback):
         experiment.log(
             {
                 f"Images/{experiment.name}": [
-                    wandb.Image(x, caption=f"Pred:{pred}, Label:{y}")
-                    for x, pred, y in zip(
+                    wandb.Image(x, caption=f"Score:{score}, Label:{y}")
+                    for x, score, y in zip(
                         val_imgs[: self.num_samples],
                         scores[: self.num_samples],
                         val_labels[: self.num_samples],
