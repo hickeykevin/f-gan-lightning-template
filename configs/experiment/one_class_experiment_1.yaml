@@ -1,34 +1,28 @@
 # @package _global_
 
 # to execute this experiment run:
-# python run.py experiment=example_simple.yaml
+# python run.py experiment=one_class_experiment_1.yaml
 
 defaults:
   - override /trainer: one_class.yaml
   - override /model: one_class.yaml
   - override /datamodule: mnist_datamodule.yaml
   - override /callbacks: default.yaml
-  - override /logger: null
-
-# all parameters below will be merged with parameters from default configurations set above
-# this allows you to overwrite only specified parameters
-# IOW, I WILL CHANGE SPECIFIC ITEM VALUES THAT I WISH. FOR THE REST THAT I DON'T CHANGE, USE PARAMETERS FROM ABOVE FILES.
 
 trainer:
   min_epochs: 1
-  max_epochs: 1000              #CHANGED THIS
-  gradient_clip_val: 0.5        #ADDED THIS PL Trainer OBJECT FLAG
+  max_epochs: 100              
+  num_sanity_val_steps: 0 #need this to prevent PL sanity check throwing error that center is not defined
+  gpus: 0       
 
 model:
-  hidden_dim: 64                #CHANGED THE FeedForwardNetwork HIDDEN LAYER SIZE
-  lr: 0.002                     #MADE LEARING RATE HIGHER
+  hidden_dim: 128                
+  lr: 0.001
+  rep_dim: 16                     
 
 datamodule:
-  batch_size: 64                #HALVED THE BATCH SIZE
-  train_val_test_split: [55_000, 5_000, 10_000]
+  batch_size: 64                
+  
+test_after_training: False
 
-#NOTE: IF WE WANT TO HAVE A NEW ITEM/CONFIGURATION COMBO, I.E. NOT USE ANY OF THE "defaults:" CONFIGURATION FILES, WE WOULD FOLLOW
-# THE PROCEDURE IN THE f-gan_experiment_1.yaml FILE, JUST HAVE EACH ITEM BE CORRESPONDING TO ONE-CLASS CONFIGURATIONS. 
-
-#AND SO ON
-#REMEMBER, THE REST OF AVAILABLE PARAMETERS THAT I HAVEN'T CHANGED ARE THE VALUES FROM THE "defaults:" FILES
+name: one_class_experiment_1
