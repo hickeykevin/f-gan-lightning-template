@@ -9,38 +9,24 @@ class LitDeepOCSVM(pl.LightningModule):
   def __init__(self, input_dim, hidden_dim, rep_dim, l2_weight = 0.01, lr = 1e-2):
     super().__init__()
 
-    #keep same initialize parameters as walter
-    #remember, these are for the feed-forward class 
+    #arguments for the feed-forward class 
     self.input_dim = input_dim
     self.hidden_dim  = hidden_dim
     self.rep_dim  = rep_dim
     self.l2_weight = l2_weight
-
-    #`batch_size` parameter moved to Lightning DataModule
-    #self.batch_size = batch_size
-
-    #`device` not needed
-    #self.device  = device
     self.lr  = lr
-
-    #`num_epochs` is handled by PL trainer object
-    #self.num_epochs  = num_epochs
-
-    #`verbose` not needed
-    #self.verbose  = verbose
-    
     self.model = FeedforwardNeuralNetModel(input_dim = self.input_dim, hidden_dim = self.hidden_dim,
                                             rep_dim = self.rep_dim).to(self.device)
     self.auroc = AUROC(num_classes=2, pos_label=1)
   
   def forward(self, x):
+      #return anomoly score for a given instance
       x = self.model.forward(x)
       score = torch.norm((x - self.center), dim=1)
       return score
 
   def on_train_start(self):
       #define the center based on 1 pass through the data
-
       #get self.model output on batch of data from the datamodule
       batch = next(iter(self.trainer.train_dataloader))
       X, y = batch
@@ -54,16 +40,15 @@ class LitDeepOCSVM(pl.LightningModule):
 
 
   def training_step(self, batch, batch_idx):
-      #remember, these instances will be filtered to self.trainer.datamodule.chosen_class
-      #handled by the dataloader
+      #remember, these instances will be filtered to be equal to 
+      #self.trainer.datamodule.chosen_class, handled by the dataloader
       X, y = batch
       X = X.reshape(-1, X.size()[-2] * X.size()[-1])
       f_X = self.model.forward(X)
 
       loss = self.loss_function(f_X)
-      #can be converted into a torchmetric class; will look into it
 
-      #log the epoch level training loss to the progress bar
+      #log the epoch level training
       self.log("train/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
       
       return {"loss": loss}
@@ -72,6 +57,8 @@ class LitDeepOCSVM(pl.LightningModule):
   def validation_step(self, batch, batch_idx):
       #any image not pertaining to self.chosen_class has label of 0
       X, y = batch
+
+      #transform labels of targets
       y[y != self.trainer.datamodule.chosen_class] = 0
       y[y == self.trainer.datamodule.chosen_class] = 1
       X = X.reshape(-1, X.size()[-2] * X.size()[-1])
@@ -79,22 +66,26 @@ class LitDeepOCSVM(pl.LightningModule):
       
       loss = self.loss_function(f_X)
 
-      #whether instances are close to center or not,
+      #produce score, indicating whether instances are close to center or not,
       #make negative for auroc score to give meaningful representation
       score = -torch.norm((f_X - self.center), dim=1)
 
+      #log epoch level loss and auroc scores
       self.log("val/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
       self.log("val/auroc", self.auroc(score, y), on_step=True, on_epoch=True)
-      #self.log("val/f1", self.f1(f_X.reshape(-1, 1), y.reshape(-1, 1)), on_step=True, on_epoch=True)
       
       return {"loss": loss}
 
   def loss_function(self, f_X):
-      #loss calculation, same procedure as walter's implementation
+      #take norm of outputs and the calculated center
       loss = torch.norm(f_X - self.center)
+
+      #add regularizer parameter to loss above
       l2_reg = torch.tensor(0.).to(self.device)
       for param in self.model.parameters():
         l2_reg += torch.norm(param)
+
+      #combine the two components to get total loss 
       loss += self.l2_weight * l2_reg
 
       return loss
