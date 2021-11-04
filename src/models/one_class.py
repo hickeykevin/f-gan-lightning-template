@@ -22,7 +22,7 @@ class LitDeepOCSVM(pl.LightningModule):
   def forward(self, x):
       #return anomoly score for a given instance
       x = self.model.forward(x)
-      score = torch.norm((x - self.center), dim=1)
+      score = torch.norm(f_X - center, dim=1)**2
       return score
 
   def on_train_start(self):
@@ -68,7 +68,7 @@ class LitDeepOCSVM(pl.LightningModule):
 
       #produce score, indicating whether instances are close to center or not,
       #make negative for auroc score to give meaningful representation
-      score = -torch.norm((f_X - self.center), dim=1)
+      score = -torch.norm(f_X - center, dim=1)**2
 
       #log epoch level loss and auroc scores
       self.log("val/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
@@ -77,8 +77,8 @@ class LitDeepOCSVM(pl.LightningModule):
       return {"loss": loss}
 
   def loss_function(self, f_X):
-      #take norm of outputs and the calculated center
-      loss = torch.norm(f_X - self.center)
+      #take squared norm of outputs and the calculated center
+      loss = torch.mean((torch.linalg.norm((f_X - center), dim=1)) ** 2)
 
       #add regularizer parameter to loss above
       l2_reg = torch.tensor(0.).to(self.device)
