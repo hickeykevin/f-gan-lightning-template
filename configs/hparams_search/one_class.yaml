@@ -42,11 +42,7 @@ hydra:
 
     # define range of hyperparameters
     search_space:
-      model.lr:
-        type: float
-        low: 0.0001
-        high: 0.2
       model.l2_weight:
         type: float
         low: 1e-7
-        high: 1e-4
+        high: 1e-3
