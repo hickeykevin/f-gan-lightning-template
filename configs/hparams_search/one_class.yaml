@@ -1,4 +1,4 @@
-@package _global_
+# @package _global_
 
 # example hyperparameter optimization of some experiment with Optuna:
 # python run.py -m hparams_search=mnist_optuna experiment=example_simple
