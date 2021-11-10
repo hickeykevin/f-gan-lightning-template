@@ -71,10 +71,15 @@ def train(config: DictConfig) -> Optional[float]:
         callbacks=callbacks,
         logger=logger,
     )
+   
+    #if auto_lr_find enabled, tune lighting trainer to set learning rate
+    if trainer.auto_lr_find:
+      trainer.tune(model, datamodule)
 
     # Train the model
     log.info("Starting training!")
     trainer.fit(model=model, datamodule=datamodule)
+
 
     # Evaluate model on test set, using the best model achieved during training
     if config.get("test_after_training") and not config.trainer.get("fast_dev_run"):
