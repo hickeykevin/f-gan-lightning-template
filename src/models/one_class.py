@@ -29,8 +29,8 @@ class LitDeepOCSVM(pl.LightningModule):
       #define the center based on 1 pass through the data
       #get self.model output on batch of data from the datamodule
       batch = next(iter(self.trainer.train_dataloader))
-      X, y = batch
-      X = X.reshape(-1, X.size()[-2] * X.size()[-1])
+      X, _ = batch
+      X = X.reshape(-1, X.size()[-2] * X.size()[-1]).to(self.device)
       f_X = self.model.forward(X)
 
       #define the center
