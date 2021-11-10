@@ -6,6 +6,11 @@
 
 defaults:
   - override /hydra/sweeper: optuna
+  - override /trainer
+  - override 
+
+trainer:
+  - max_epochs: 30
 
 # choose metric which will be optimized by Optuna
 optimized_metric: "val/auroc"
