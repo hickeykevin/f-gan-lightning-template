@@ -1,0 +1,37 @@
+ # @package _global_
+
+# to execute this experiment run:
+# python run.py experiment=one_class_;2_search
+
+defaults:
+  - override /trainer: one_class.yaml
+  - override /model: one_class.yaml
+  - override /datamodule: mnist_datamodule.yaml
+  - override /callbacks: wandb_one_class.yaml
+
+trainer:
+  min_epochs: 1
+  max_epochs: 30              
+  num_sanity_val_steps: 0 #need this to prevent PL sanity check throwing error that center is not defined
+  gpus: 1       
+
+model:
+  hidden_dim: 128                
+  lr: 0.001
+  rep_dim: 16                     
+
+datamodule:
+  batch_size: 64
+
+callbacks:
+  defaults:
+    early_stopping: null
+
+  
+
+test_after_training: False
+
+name: one_class_l2_search
+
+
+
