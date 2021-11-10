@@ -44,5 +44,5 @@ hydra:
     search_space:
       model.l2_weight:
         type: float
-        low: 1e-7
-        high: 1e-3
+        low: 1e-2
+        high: 5e-1
