@@ -15,3 +15,14 @@ class FeedforwardNeuralNetModel(nn.Module):
         # Linear function (readout)  # LINEAR
         out = self.fc2(out)
         return out
+
+class FF(nn.Module):
+    def __init__(self, layer_shapes):
+      super(FF, self).__init__()
+
+      self.linears = nn.ModuleList([nn.Linear(inp, out) for inp, out in layer_shapes])
+    
+    def forward(self, x):
+      for i, layer in enumerate(self.linears):
+        x = self.linears[i](x)
+      return x
