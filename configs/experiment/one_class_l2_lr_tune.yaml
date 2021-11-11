@@ -1,0 +1,63 @@
+ # @package _global_
+
+# to execute this experiment run:
+# python run.py experiment=one_class_;2_search
+
+defaults:
+  - override /trainer: one_class.yaml
+  - override /model: one_class.yaml
+  - override /datamodule: mnist_datamodule.yaml
+  - override /callbacks: null
+
+trainer:
+  min_epochs: 1
+  max_epochs: 50              
+  num_sanity_val_steps: 0 #need this to prevent PL sanity check throwing error that center is not defined
+  gpus: 1       
+
+model:
+  hidden_dim: 128                
+  lr: 0.001
+  rep_dim: 16                     
+
+datamodule:
+  batch_size: 64
+
+callbacks:
+  model_checkpoint:
+    _target_: pytorch_lightning.callbacks.ModelCheckpoint
+    monitor: "val/loss" # name of the logged metric which determines when model is improving
+    mode: "min" # can be "max" or "min"
+    save_top_k: 1 # save k best models (determined by above metric)
+    save_last: True # additionaly always save model from last epoch
+    verbose: False
+    dirpath: "checkpoints/"
+    filename: "epoch_{epoch:03d}"
+    auto_insert_metric_name: False
+    
+  watch_model:
+    _target_: src.callbacks.wandb_callbacks.WatchModel
+    log: "all"
+    log_freq: 100
+
+  upload_code_as_artifact:
+    _target_: src.callbacks.wandb_callbacks.UploadCodeAsArtifact
+    code_dir: ${work_dir}/src
+
+  upload_ckpts_as_artifact:
+    _target_: src.callbacks.wandb_callbacks.UploadCheckpointsAsArtifact
+    ckpt_dir: "checkpoints/"
+    upload_best_only: True
+
+  log_predictions:
+    _target_: src.callbacks.wandb_callbacks.LogOneClassPredictions
+    num_samples: 5
+
+  
+
+test_after_training: False
+
+name: one_class_lr_l2_search
+
+
+
