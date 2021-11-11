@@ -3,8 +3,9 @@
 _target_: src.models.one_class.LitDeepOCSVM
 
 #is preset for mnist data
-input_dim: 784
-hidden_dim: 64
-rep_dim: 1
+#input_dim: 784
+#hidden_dim: 64
+#rep_dim: 1
+layer_shapes: (784, 64), (64, 16)
 l2_weight: 1e-2
 lr: 1e-2

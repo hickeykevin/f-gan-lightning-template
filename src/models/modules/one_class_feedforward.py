@@ -1,4 +1,5 @@
 import torch.nn as nn
+
 class FeedforwardNeuralNetModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, rep_dim):
         super(FeedforwardNeuralNetModel, self).__init__()
@@ -19,10 +20,16 @@ class FeedforwardNeuralNetModel(nn.Module):
 class FF(nn.Module):
     def __init__(self, layer_shapes):
       super(FF, self).__init__()
-
-      self.linears = nn.ModuleList([nn.Linear(inp, out) for inp, out in layer_shapes])
+      # Put configuration layer shapes into list 
+      self.layer_shapes = list(eval(layer_shapes))
+      # Create linear layers 
+      self.linears = nn.ModuleList([nn.Linear(inp, out, bias=False) for inp, out in self.layer_shapes])
     
     def forward(self, x):
       for i, layer in enumerate(self.linears):
         x = self.linears[i](x)
+        # If last layer, do not pass through activation function, else do so
+        if layer != self.linears[-1]:
+          x = nn.functional.leaky_relu(x)
+      
       return x

@@ -1,30 +1,31 @@
 #kevin's deep ocsvm translation into pytorch lightinng module
 import pytorch_lightning as pl
 import torch
-from src.models.modules.one_class_feedforward import FeedforwardNeuralNetModel
+from src.models.modules.one_class_feedforward import FeedforwardNeuralNetModel, FF
 from torchmetrics import AUROC
 
 
 class LitDeepOCSVM(pl.LightningModule):
   def __init__(
     self, 
-    input_dim, 
-    hidden_dim, 
-    rep_dim, 
+    #input_dim, 
+    #hidden_dim, 
+    #rep_dim, 
     layer_shapes,
     l2_weight = 0.01, 
     lr = 1e-2):
     super().__init__()
 
     #arguments for the feed-forward class 
-    self.input_dim = input_dim
-    self.hidden_dim  = hidden_dim
-    self.rep_dim  = rep_dim
-    self.layer_shapes = layer_shape
+    #self.input_dim = input_dim
+    #self.hidden_dim  = hidden_dim
+    #self.rep_dim  = rep_dim
+    self.layer_shapes = layer_shapes
     self.l2_weight = l2_weight
     self.lr  = lr
-    self.model = FeedforwardNeuralNetModel(input_dim = self.input_dim, hidden_dim = self.hidden_dim,
-                                            rep_dim = self.rep_dim).to(self.device)
+    #self.model = FeedforwardNeuralNetModel(input_dim = self.input_dim, hidden_dim = self.hidden_dim,
+    #                                        rep_dim = self.rep_dim).to(self.device)
+    self.model = FF(self.layer_shapes)
     self.auroc = AUROC(num_classes=2, pos_label=1)
   
   def forward(self, x):
