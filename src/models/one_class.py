@@ -8,18 +8,19 @@ from torchmetrics import AUROC
 class LitDeepOCSVM(pl.LightningModule):
   def __init__(
     self, 
-    #input_dim, 
-    #hidden_dim, 
-    #rep_dim, 
+    input_dim, 
+    hidden_dim, 
+    rep_dim, 
     layer_shapes,
     l2_weight = 0.01, 
     lr = 1e-2):
     super().__init__()
 
     #arguments for the feed-forward class 
-    #self.input_dim = input_dim
-    #self.hidden_dim  = hidden_dim
-    #self.rep_dim  = rep_dim
+    self.input_dim = input_dim
+    self.hidden_dim  = hidden_dim
+    self.rep_dim  = rep_dim
+    self.layer_shapes = layer_shape
     self.l2_weight = l2_weight
     self.lr  = lr
     self.model = FeedforwardNeuralNetModel(input_dim = self.input_dim, hidden_dim = self.hidden_dim,
