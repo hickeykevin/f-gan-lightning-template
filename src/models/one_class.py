@@ -85,6 +85,11 @@ class LitDeepOCSVM(pl.LightningModule):
       
       return {"loss": loss}
 
+
+  def on_epoch_end(self):
+        # reset metrics at the end of every epoch!
+        self.auroc.reset()
+
   def loss_function(self, f_X):
       #take mean of squared difference of outputs and calculated center
       loss = torch.mean(torch.sum((f_X - self.center)**2, dim=1))
@@ -98,6 +103,8 @@ class LitDeepOCSVM(pl.LightningModule):
       loss += self.l2_weight * l2_reg
 
       return loss
+
+  
 
 
   #walter's optimizer implementation, conveted into PL form
