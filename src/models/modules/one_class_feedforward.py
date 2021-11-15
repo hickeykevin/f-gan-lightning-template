@@ -1,5 +1,5 @@
 import torch.nn as nn
-from itertools import zip_longest
+from itertools import zip_longest, chain
 
 class FeedforwardNeuralNetModel(nn.Module):
     def __init__(self, input_dim, hidden_dim, rep_dim):
@@ -39,36 +39,42 @@ class FF(nn.Module):
       return x
 
 class Network(nn.Module):
-  def __init__(self, input_size, use_batch_norm=True, **kwargs):
+  def __init__(self, input_size: int, layer_sizes: dict, use_batch_norm:bool=True):
     super(Network, self).__init__()
     self.use_batch_norm = use_batch_norm
-    
-    # Initialize list of layers; first is layer to receive data
-    layers = [nn.Linear(input_size, layer_sizes[0][1], bias=False)]
     
     # Store specified layer sizes in list;
     # When performing hyperparameter tuning, 
     # If layer size = 0, then do not include that layer 
-    layer_sizes = [x for x in list(kwargs.items()) if x[-1] != 0]
+    layer_sizes = [x for x in list(layer_sizes.items()) if x[-1] != 0]
+    
+    # Initialize list of linear layers; first layer input will be shape of data,
+    # Output will be shape of first specified layer_size
+    linear_layers = [nn.Linear(input_size, layer_sizes[0][1], bias=False)]
+    
+    # Loop over other specified linear layer sizes to include additional linear layers
     for i, x in enumerate(layer_sizes):
       if i != len(layer_sizes)-1:
-        layers.append(nn.Linear(x[-1], layer_sizes[i+1][-1], bias=False))
+        linear_layers.append(nn.Linear(x[-1], layer_sizes[i+1][-1], bias=False))
     
-    # Create a block of Linear, Batch_Norm, LeakyRelu layers
-    layers = nn.ModuleList(layers)
-    activations = nn.ModuleList(list(nn.LeakyReLU() for _ in layer_sizes[:-1]))
+    # Create list of LeakyRelu activations
+    activations = list(nn.LeakyReLU() for _ in layer_sizes[:-1])
     
+    # Create list of Batch Norm layers if specified
+    # Zip together linear layers, activations and Batch Norm layers
     if self.use_batch_norm:
-      batch_norm_layers = nn.ModuleList(list(nn.BatchNorm1d(out[-1]) for out in layer_sizes[:-1]))
-      self.blocks = list(zip_longest(layers, batch_norm_layers, activations))
+      batch_norm_layers = list(nn.BatchNorm1d(out[-1]) for out in layer_sizes[:-1])
+      blocks = list(zip_longest(linear_layers, batch_norm_layers, activations))
     else:
-      self.blocks = list(zip_longest(layers, activations))
+      blocks = list(zip_longest(linear_layers, activations))
+
+    # Unpack zipped layers, wrap in nn.ModuleList object
+    layers_list = list(chain(*blocks))
+    self.layers = nn.ModuleList(layers_list)
 
 
   def forward(self, x):
-    for block in self.blocks:
-      for layer in block:
-        #last layer does not use activation of batch norm
-        if layer != None:
-          x = layer(x)
+    for layer in self.layers:
+      if layer != None:
+        x = layer(x)
     return x
