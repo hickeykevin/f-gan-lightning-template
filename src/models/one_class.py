@@ -83,16 +83,15 @@ class LitDeepOCSVM(pl.LightningModule):
       #make negative for auroc score to give meaningful representation
       score = -(torch.norm(f_X - self.center, dim=1)**2)
 
+      self.auroc(score, y)
+
       #log epoch level loss and auroc scores
       self.log("val/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
-      self.log("val/auroc", self.auroc(score, y), on_step=True, on_epoch=True)
+      self.log("val/auroc", self.auroc, on_step=True, on_epoch=True)
       
       return {"loss": loss}
 
 
-  def on_epoch_end(self):
-        # reset metrics at the end of every epoch!
-        self.auroc.reset()
 
   def loss_function(self, f_X):
       #take mean of squared difference of outputs and calculated center
