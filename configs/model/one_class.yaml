@@ -6,6 +6,9 @@ _target_: src.models.one_class.LitDeepOCSVM
 #input_dim: 784
 #hidden_dim: 64
 #rep_dim: 1
-layer_shapes: (784, 64), (64, 16)
+#layer_shapes: (784, 64), (64, 16)
+input_size: 784
 l2_weight: 1e-2
 lr: 1e-2
+one_class_layer_1_size: 64
+one_class_layer_2_size: 16

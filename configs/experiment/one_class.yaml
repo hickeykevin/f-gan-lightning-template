@@ -1,7 +1,7 @@
 # @package _global_
 
 # to execute this experiment run:
-# python run.py experiment=one_class_experiment_1.yaml
+# python run.py experiment=one_class_experiment.yaml
 
 defaults:
   - override /trainer: one_class.yaml
@@ -16,14 +16,21 @@ trainer:
   gpus: 0       
 
 model:
-  layer_shapes: (784, 64), (64, 16)
+  #layer_shapes: (784, 64), (64, 16)
   #hidden_dim: 128                
   #lr: 0.001
-  #rep_dim: 16                     
+  #rep_dim: 16
+  input_size: 784
+  l2_weight: 1e-2
+  lr: 1e-2
+  layer_1_size: 64
+  layer_2_size: 32
+  layer_3_size: 16
+  layer_4_size: 8                     
 
 datamodule:
   batch_size: 64                
   
 test_after_training: False
 
-name: one_class_experiment_1
+name: one_class_experiment
