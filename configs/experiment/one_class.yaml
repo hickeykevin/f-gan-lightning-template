@@ -16,17 +16,17 @@ trainer:
   gpus: 0       
 
 model:
-  #layer_shapes: (784, 64), (64, 16)
-  #hidden_dim: 128                
-  #lr: 0.001
-  #rep_dim: 16
-  input_size: 784
+  input_dim: 784
+  hidden_dim: 128                
+  lr: 0.001
+  rep_dim: 16
   l2_weight: 1e-2
-  lr: 1e-2
-  layer_1_size: 64
-  layer_2_size: 32
-  layer_3_size: 16
-  layer_4_size: 8                     
+  
+  #use_batch_norm: False
+  #layer_1_size: 64
+  #layer_2_size: 0
+  #layer_3_size: 16
+  #layer_4_size: 0                     
 
 datamodule:
   batch_size: 64                
