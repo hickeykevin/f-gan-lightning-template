@@ -37,3 +37,38 @@ class FF(nn.Module):
          if layer != None:
           x = layer(x) 
       return x
+
+class Network(nn.Module):
+  def __init__(self, input_size, use_batch_norm=True, **kwargs):
+    super(Network, self).__init__()
+    self.use_batch_norm = use_batch_norm
+    
+    # Initialize list of layers; first is layer to receive data
+    layers = [nn.Linear(input_size, layer_sizes[0][1], bias=False)]
+    
+    # Store specified layer sizes in list;
+    # When performing hyperparameter tuning, 
+    # If layer size = 0, then do not include that layer 
+    layer_sizes = [x for x in list(kwargs.items()) if x[-1] != 0]
+    for i, x in enumerate(layer_sizes):
+      if i != len(layer_sizes)-1:
+        layers.append(nn.Linear(x[-1], layer_sizes[i+1][-1], bias=False))
+    
+    # Create a block of Linear, Batch_Norm, LeakyRelu layers
+    layers = nn.ModuleList(layers)
+    activations = nn.ModuleList(list(nn.LeakyReLU() for _ in layer_sizes[:-1]))
+    
+    if self.use_batch_norm:
+      batch_norm_layers = nn.ModuleList(list(nn.BatchNorm1d(out[-1]) for out in layer_sizes[:-1]))
+      self.blocks = list(zip_longest(layers, batch_norm_layers, activations))
+    else:
+      self.blocks = list(zip_longest(layers, activations))
+
+
+  def forward(self, x):
+    for block in self.blocks:
+      for layer in block:
+        #last layer does not use activation of batch norm
+        if layer != None:
+          x = layer(x)
+    return x
