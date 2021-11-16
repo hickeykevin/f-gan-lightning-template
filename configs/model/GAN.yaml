@@ -1,3 +1,5 @@
+# f-gan Lightning Module specific configurations
+
 _target_: src.models.GAN.LitFGAN
 
 latent_dim: 100

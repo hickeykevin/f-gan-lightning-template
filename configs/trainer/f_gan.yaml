@@ -1,4 +1,4 @@
-#one class specific Trainer object configurations
+#f-gan specific Pytorch Lightning Trainer object configurations
 
 _target_: pytorch_lightning.Trainer
 
