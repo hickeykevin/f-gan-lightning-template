@@ -5,7 +5,8 @@
 
 defaults:
   - override /trainer: f_gan.yaml
-  - override /datamodule: mnist_datamodule.yaml
+  - override /model: GAN.yaml
+  - override /datamodule: f_gan_mnist_datamodule.yaml
   - override /callbacks: null
   - override /logger: wandb.yaml
 
@@ -18,6 +19,9 @@ trainer:
     min_epochs: 1
     max_epochs: 5
     gpus: 0
+
+model:
+    batch_size: ${datamodule.batch_size}
 
 callbacks:
   upload_code_as_artifact:
