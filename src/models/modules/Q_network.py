@@ -37,3 +37,20 @@ class Q(nn.Module):
     x = F.relu(self.conv_bn_layer_3(x))
     x = F.tanh(self.tconv_layer(x))
     return x
+
+class Generator(nn.Module):
+    """ Generator. Input is noise, output is a generated image.
+    """
+    def __init__(self, image_size, hidden_dim, z_dim):
+        super().__init__()
+        self.linear = nn.Linear(z_dim, hidden_dim)
+        self.generate = nn.Linear(hidden_dim, image_size)
+
+    def forward(self, x):
+        activated = F.relu(self.linear(x))
+        generation = torch.sigmoid(self.generate(activated))
+        return generation
+
+
+
+#taken from https://github.com/shayneobrien/generative-models/blob/74fbe414f81eaed29274e273f1fb6128abdb0ff5/src/f_gan.py

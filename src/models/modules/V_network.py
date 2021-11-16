@@ -36,3 +36,17 @@ class V(nn.Module):
     x = self.fc_layer(x)
     return x
 
+class Discriminator(nn.Module):
+    """ Discriminator. Input is an image (real or generated),
+    output is P(generated).
+    """
+    def __init__(self, image_size, hidden_dim, output_dim):
+        super().__init__()
+        self.linear = nn.Linear(image_size, hidden_dim)
+        self.discriminate = nn.Linear(hidden_dim, output_dim)
+
+    def forward(self, x):
+        activated = F.relu(self.linear(x))
+        discrimination = torch.sigmoid(self.discriminate(activated))
+        return discrimination
+#taken from https://github.com/shayneobrien/generative-models/blob/74fbe414f81eaed29274e273f1fb6128abdb0ff5/src/f_gan.py
