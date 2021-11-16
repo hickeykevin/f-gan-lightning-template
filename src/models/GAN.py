@@ -27,11 +27,14 @@ class LitFGAN(LightningModule):
     self.batch_size = batch_size
     self.num_classes = num_classes
     self.chosen_divergence = chosen_divergence
+    self.lr = lr
     self.save_hyperparameters()
 
     self.Q = Q(self.latent_dim)
     self.V = V()
     self.validation_z = torch.randn(self.img_shape[0], self.latent_dim)
+    self.q_criterion = Q_loss(chosen_divergence = self.chosen_divergence)
+    self.v_criterion = V_loss(chosen_divergence = self.chosen_divergence)
 
   def forward(self, z):
     return self.Q(z)
@@ -41,15 +44,14 @@ class LitFGAN(LightningModule):
 
     #create sample generated images
     z = torch.randn(imgs.shape[0], self.hparams.latent_dim).type_as(imgs)
-    q_criterion = Q_loss(chosen_divergence = self.chosen_divergence)
-    v_criterion = V_loss(chosen_divergence = self.chosen_divergence)
+
 
     #train Q
     if optimizer_idx == 0:
       generated_images = self(z)
       v_output_fake = self.V(generated_images)
 
-      loss_Q = q_criterion(v_output_fake)
+      loss_Q = self.q_criterion(v_output_fake)
 
       self.log("train/Q_loss", loss_Q, on_epoch=True)
 
@@ -66,12 +68,12 @@ class LitFGAN(LightningModule):
       
       #loss on real images
       v_real_imgs_output = self.V(imgs)
-      loss_real_imgs = v_criterion(v_real_imgs_output)
+      loss_real_imgs = self.v_criterion(v_real_imgs_output)
 
       #loss on fake images
       generated_images = self.forward(z)
       v_generated_imgs_output = self.V(generated_images)
-      loss_generated_imgs = -q_criterion(v_generated_imgs_output)
+      loss_generated_imgs = -self.q_criterion(v_generated_imgs_output)
 
       total_loss_v = -(loss_real_imgs + loss_generated_imgs)
 

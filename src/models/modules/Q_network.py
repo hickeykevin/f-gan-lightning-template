@@ -16,17 +16,17 @@ class Q(nn.Module):
         nn.BatchNorm2d(self.gf_dim*4))
 
     self.conv_bn_layer_2 = nn.Sequential(
-        nn.ConvTranspose2d(self.gf_dim*4, self.gf_dim*2, 4, stride=2, padding=1),
+        nn.ConvTranspose2d(self.gf_dim*4, self.gf_dim*2, 4, stride=2, padding=1, bias=False),
         nn.BatchNorm2d(self.gf_dim*2))
 
     self.conv_bn_layer_3 = nn.Sequential(
-        nn.ConvTranspose2d(self.gf_dim*2, self.gf_dim, 4, stride=2, padding=1),
+        nn.ConvTranspose2d(self.gf_dim*2, self.gf_dim, 4, stride=2, padding=1, bias=False),
         nn.BatchNorm2d(self.gf_dim))    
     
-    self.tconv_layer = nn.ConvTranspose2d(self.gf_dim, self.c_dim, 4, stride=2, padding=1)
+    self.tconv_layer = nn.ConvTranspose2d(self.gf_dim, self.c_dim, 4, stride=2, padding=1, bias=False)
     
     self.projection_z = nn.Sequential(
-        nn.Linear(self.latent_space, 4*4*self.gf_dim*8),
+        nn.Linear(self.latent_space, 4*4*self.gf_dim*8, bias=False),
         nn.BatchNorm1d(4*4*self.gf_dim*8)
     )
 
