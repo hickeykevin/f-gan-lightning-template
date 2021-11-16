@@ -4,8 +4,8 @@ import torch
 from torch import nn
 
 class GeneratorLoss:
-  def __init__(self, chosen_divergnce: str):
-    self.chosen_divergence = chosen_divergnce
+  def __init__(self, chosen_divergence: str):
+    self.chosen_divergence = chosen_divergence
 
   def compute_loss(self, output):
     if self.chosen_divergence == "KLD":
@@ -80,7 +80,7 @@ CONJUGATES = {
     "JSD": lambda t: -torch.log(2.0 - torch.exp(t)),
     "GAN": lambda t: -torch.log(1.0 - torch.exp(t)) 
     }
-    
+
 class Q_loss(nn.Module):
   def __init__(self, chosen_divergence):
     super(Q_loss, self).__init__()
