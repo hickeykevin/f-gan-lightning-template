@@ -1,106 +1,100 @@
-from src.models.modules.Q_network import Q
-from src.models.modules.V_network import V
+from src.models.modules.Q_network import Q, Generator
+from src.models.modules.V_network import V, Discriminator
 
-from src.models.modules.loss_modules import ACTIVATIONS, CONJUGATES, Q_loss, V_loss
+from src.models.modules.loss_modules import DiscriminatorLoss, GeneratorLoss
 from pytorch_lightning import LightningModule
 
 import torch
 from collections import OrderedDict
 from torchvision.utils import make_grid
 
+
 class LitFGAN(LightningModule):
   def __init__(
       self,
       latent_dim: int = 100,
-      img_shape = [1, 28, 28],
+      img_size = 784,
       num_classes: int = 10,
+      hidden_dim = 64,
+      output_dim = 1,
       lr: float = 0.0002,
-      batch_size: int = 64,
       chosen_divergence: str = "KLD",
-      activations: dict = ACTIVATIONS,
-      conjugates: dict = CONJUGATES
               ):
     
     super().__init__()
     self.latent_dim = latent_dim
-    self.img_shape = img_shape
-    self.batch_size = batch_size
+    self.img_size = img_size,
+    self.batch_size = self.trainer.dataloader.batch_size
     self.num_classes = num_classes
+    self.hidden_dim = hidden_dim
+    self.output_dim = output_dim
     self.chosen_divergence = chosen_divergence
     self.lr = lr
     self.save_hyperparameters()
 
-    self.Q = Q(self.latent_dim)
-    self.V = V()
-    self.validation_z = torch.randn(self.img_shape[0], self.latent_dim)
-    self.q_criterion = Q_loss(chosen_divergence = self.chosen_divergence)
-    self.v_criterion = V_loss(chosen_divergence = self.chosen_divergence)
+    self.generator = Generator(image_size=self.img_size, hidden_dim=self.hidden_dim, z_dim=latent_dim)
+    self.discriminator = Discriminator(image_size=self.img_size, hidden_dim=self.hidden_dim, output_dim=self.output_dim)
+    
+    self.validation_z = torch.randn(self.batch_size, self.latent_dim)
+    self.g_criterion = GeneratorLoss(chosen_divergence = self.chosen_divergence)
+    self.d_criterion = DiscriminatorLoss(chosen_divergence = self.chosen_divergence)
 
   def forward(self, z):
-    return self.Q(z)
+    return self.generator.forward(z)
 
   def training_step(self, batch, batch_idx, optimizer_idx):
     imgs, _ = batch
 
     #create sample generated images
-    z = torch.randn(imgs.shape[0], self.hparams.latent_dim).type_as(imgs)
+    z = torch.randn(self.batch_size, self.hparams.latent_dim).type_as(imgs)
 
-
-    #train Q
+    #train generator
     if optimizer_idx == 0:
-      generated_images = self(z)
-      v_output_fake = self.V(generated_images)
+      generated_images = self.forward(z)
+      discriminator_output_fake = self.discriminator.forward(generated_images)
 
-      loss_Q = self.q_criterion(v_output_fake)
+      loss_G = self.g_criterion.compute_loss(discriminator_output_fake)
 
-      self.log("train/Q_loss", loss_Q, on_epoch=True)
+      self.log("train/Q_loss", loss_G, on_epoch=True)
 
       output = OrderedDict(
           {
-          "loss": loss_Q,
-          "log": loss_Q,
+          "loss": loss_G,
+          "log": loss_G,
           }
       )
       return output
 
-    #Train V
+    #Train discriminator
     elif optimizer_idx == 1:
       
       #loss on real images
-      v_real_imgs_output = self.V(imgs)
-      loss_real_imgs = self.v_criterion(v_real_imgs_output)
+      discriminator_output_real_imgs = self.discriminator.forward(imgs)
+      loss_real_imgs = self.d_criterion.compute_loss(discriminator_output_real_imgs)
 
       #loss on fake images
       generated_images = self.forward(z)
-      v_generated_imgs_output = self.V(generated_images)
-      loss_generated_imgs = -self.q_criterion(v_generated_imgs_output)
+      discriminator_generated_imgs_output = self.discriminator(generated_images)
+      loss_generated_imgs = -self.g_criterion.compute_loss(discriminator_generated_imgs_output)
 
-      total_loss_v = -(loss_real_imgs + loss_generated_imgs)
+      total_loss_D = -(loss_real_imgs + loss_generated_imgs)
 
-      self.log("train/V_loss", total_loss_v, on_epoch=True)
-
+      self.log("train/V_loss", total_loss_D, on_epoch=True)
 
       output = OrderedDict(
           {
-          "loss": total_loss_v,
-          "log": total_loss_v
+          "loss": total_loss_D,
+          "log": total_loss_D
           }
         )
       
   def configure_optimizers(self):
-    lr = self.hparams.lr
+    optimizer_G = torch.optim.Adam(self.generator.parameters(), lr=self.hparams.lr)
+    optimizer_D = torch.optim.Adam(self.discriminator.parameters(), lr=self.hparams.lr)
 
-    optimizer_q = torch.optim.Adam(self.Q.parameters(), lr=lr)
-    optimizer_v = torch.optim.Adam(self.V.parameters(), lr=lr)
+    return [optimizer_G, optimizer_D]
 
-    return [optimizer_q, optimizer_v]
 
-  def training_epoch_end(self, outputs):
-    pass
-    #wandb = self.logger.experiment[0]
-    #generated_images = make_grid(self(self.validation_z).to(device=pl_module.device)
-    #generated_images = wandb.Image(generated_images)
-    #wandb.add_images("generated_examples", generated_images_outputs)
 
 
     
