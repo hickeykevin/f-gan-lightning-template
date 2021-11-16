@@ -50,9 +50,9 @@ hydra:
         type: float
         low: 1e-7
         high: 1e-4
-      model.hidden_size:
-        type: catetory
+      model.hidden_dim:
+        type: categorical
         choices: [512, 256, 128, 64, 32]
       model.rep_dim:
-        type: category
+        type: categorical
         choices: [64, 32, 16, 8, 4]
