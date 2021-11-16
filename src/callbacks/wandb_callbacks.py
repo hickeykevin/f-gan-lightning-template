@@ -316,12 +316,12 @@ class LogGeneratedImages(Callback):
             logger = get_wandb_logger(trainer=trainer)
             experiment = logger.experiment
             validation_z = torch.randn(
-              pl_module.batch_size, 
-              pl_module.latent_dim).to(device=pl_module.device)
+              trainer.datamodule.batch_size, 
+              pl_module.hparams.latent_dim).to(device=pl_module.device)
 
             # run the batch through the network
-            generated_images = pl_module(validation_z)
-            generated_images_logging = (wandb.Image(x.squeeze()) for x in generated_images[:self.num_samples])
+            generated_images = pl_module.forward(validation_z)
+            generated_images_logging = (wandb.Image(x) for x in generated_images[:self.num_samples])
             #generated_images = make_grid(generated_images[:8])
 
             # log the images as wandb Image
@@ -343,4 +343,4 @@ class WatchModelFGan(Callback):
     @rank_zero_only
     def on_train_start(self, trainer, pl_module):
         logger = get_wandb_logger(trainer=trainer)
-        logger.watch(model=(pl_module.Q, pl_module.V), log=self.log, log_freq=self.log_freq)
+        logger.watch(model=(pl_module.generator, pl_module.discriminator), log=self.log, log_freq=self.log_freq)

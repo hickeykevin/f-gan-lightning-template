@@ -26,7 +26,6 @@ class LitDeepOCSVM(pl.LightningModule):
     self.lr  = lr
     self.model = FeedforwardNeuralNetModel(input_dim = self.input_dim, hidden_dim = self.hidden_dim,
                                             rep_dim = self.rep_dim).to(self.device)
-    print(kwargs)
     #self.model = Network(self.input_dim, kwargs, use_batch_norm=True)
     self.auroc = AUROC(num_classes=2, pos_label=1)
   

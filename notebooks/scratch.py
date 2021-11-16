@@ -45,11 +45,29 @@ class V(nn.Module):
     return x
 # %%
 v = V()
-x = torch.randn(64, 1, 64, 64)
+x = torch.randn(64, 1, 28, 28)
 v.forward(x)
 
 
 
 # %%
+class Generator(nn.Module):
+    """ Generator. Input is noise, output is a generated image.
+    """
+    def __init__(self, image_size, hidden_dim, z_dim):
+        super().__init__()
+        self.linear = nn.Linear(z_dim, hidden_dim)
+        self.generate = nn.Linear(hidden_dim, image_size)
 
+    def forward(self, x):
+        activated = F.relu(self.linear(x))
+        generation = torch.sigmoid(self.generate(activated))
+        return generation
+# %%
+g = Generator(784, 64, 100)
+
+x = torch.randn(64, 1, 28, 28)
+z = torch.randn(64, 100)
+
+g.forward(z).size()
 # %%

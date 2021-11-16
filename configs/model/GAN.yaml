@@ -2,10 +2,10 @@
 
 _target_: src.models.GAN.LitFGAN
 
-latent_dim: 100,
-img_size: 784,
-num_classes: 10,
-hidden_dim: 64,
-output_dim: 1,
-lr: 0.0002,
-chosen_divergence: "KLD",
+latent_dim: 100
+img_size: 784
+hidden_dim: 64
+output_dim: 1
+lr: 0.0002
+chosen_divergence: "KLD"
+batch_size: 64
