@@ -22,7 +22,6 @@ class LitDeepOCSVM(pl.LightningModule):
     self.input_dim = input_dim
     self.hidden_dim  = hidden_dim
     self.rep_dim  = rep_dim
-    #self.layer_shapes = layer_shapes
     self.l2_weight = l2_weight
     self.lr  = lr
     self.model = FeedforwardNeuralNetModel(input_dim = self.input_dim, hidden_dim = self.hidden_dim,
