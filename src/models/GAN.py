@@ -44,14 +44,17 @@ class LitFGAN(LightningModule):
   def training_step(self, batch, batch_idx, optimizer_idx):
     imgs, _ = batch
 
-    #create sample generated images
+    # Create sample of noise
     z = torch.randn(self.batch_size, self.hparams.latent_dim).type_as(imgs)
 
-    #train generator
+    # Train generator
     if optimizer_idx == 0:
       generated_images = self.forward(z)
+
+      # Discriminator output on generated instances
       discriminator_output_generated_imgs = self.discriminator.forward(generated_images)
 
+      # Loss calculation for Generator
       loss_G = self.g_criterion.compute_loss(discriminator_output_generated_imgs)
 
       self.log("train/G_loss", loss_G, on_epoch=True)
@@ -59,7 +62,7 @@ class LitFGAN(LightningModule):
       output = {"loss": loss_G}
       return output
 
-    #Train discriminator
+    # Train discriminator
     elif optimizer_idx == 1:
       # Discriminator output on real instances
       discriminator_output_real_imgs = self.discriminator.forward(imgs.view(self.batch_size, -1))
