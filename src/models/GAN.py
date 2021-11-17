@@ -43,7 +43,6 @@ class LitFGAN(LightningModule):
 
   def training_step(self, batch, batch_idx, optimizer_idx):
     imgs, _ = batch
-    print(imgs.size())
 
     #create sample generated images
     z = torch.randn(self.batch_size, self.hparams.latent_dim).type_as(imgs)
@@ -51,42 +50,32 @@ class LitFGAN(LightningModule):
     #train generator
     if optimizer_idx == 0:
       generated_images = self.forward(z)
-      discriminator_output_fake = self.discriminator.forward(generated_images)
+      discriminator_output_generated_imgs = self.discriminator.forward(generated_images)
 
-      loss_G = self.g_criterion.compute_loss(discriminator_output_fake)
+      loss_G = self.g_criterion.compute_loss(discriminator_output_generated_imgs)
 
-      self.log("train/Q_loss", loss_G, on_epoch=True)
+      self.log("train/G_loss", loss_G, on_epoch=True)
 
-      output = OrderedDict(
-          {
-          "loss": loss_G,
-          "log": loss_G,
-          }
-      )
+      output = {"loss": loss_G}
       return output
 
     #Train discriminator
     elif optimizer_idx == 1:
-      print(imgs.view(self.batch_size, -1).size())
-      #loss on real images
+      # Discriminator output on real instances
       discriminator_output_real_imgs = self.discriminator.forward(imgs.view(self.batch_size, -1))
-      loss_real_imgs = self.d_criterion.compute_loss(discriminator_output_real_imgs)
-
-      #loss on fake images
+      
+      # Discriminator output on fake instances
       generated_images = self.forward(z)
-      discriminator_generated_imgs_output = self.discriminator(generated_images)
-      loss_generated_imgs = -self.g_criterion.compute_loss(discriminator_generated_imgs_output)
+      discriminator_output_generated_imgs = self.discriminator.forward(generated_images)
+      
+      # Loss calculation for discriminator 
+      loss_D = self.d_criterion.compute_loss(discriminator_output_real_imgs, discriminator_output_generated_imgs)
 
-      total_loss_D = -(loss_real_imgs + loss_generated_imgs)
+      self.log("train/D_loss", loss_D, on_epoch=True)
 
-      self.log("train/V_loss", total_loss_D, on_epoch=True)
-
-      output = OrderedDict(
-          {
-          "loss": total_loss_D,
-          "log": total_loss_D
-          }
-        )
+      output = {"loss": loss_D}
+      return output
+        
       
   def configure_optimizers(self):
     optimizer_G = torch.optim.Adam(self.generator.parameters(), lr=self.hparams.lr)
