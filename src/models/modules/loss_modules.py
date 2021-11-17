@@ -7,30 +7,30 @@ class GeneratorLoss:
   def __init__(self, chosen_divergence: str):
     self.chosen_divergence = chosen_divergence
 
-  def compute_loss(self, output):
+  def compute_loss(self, G_output):
     if self.chosen_divergence == "KLD":
-      activation_output = output
-      return -torch.mean(torch.exp(activation_output-1))
+      activation_G_output = G_output
+      return -torch.mean(torch.exp(activation_G_output-1))
 
     elif self.chosen_divergence == "RKL":
-      activation_output = -torch.exp(-output)
-      return -torch.mean(-1 - torch.log(-activation_output))
+      activation_G_output = -torch.exp(-G_output)
+      return -torch.mean(-1 - torch.log(-activation_G_output))
 
     elif self.chosen_divergence == "CHI":
-      activation_output = output
-      return -torch.mean(0.25 * activation_output**2 + activation_output)
+      activation_G_output = G_output
+      return -torch.mean(0.25 * activation_G_output**2 + activation_G_output)
 
     elif self.chosen_divergence == "SQH":
-      activation_output = 1-torch.exp(-output)
-      return -torch.mean(output / (1. - output))
+      activation_G_output = 1-torch.exp(-G_output)
+      return -torch.mean(G_output / (1. - G_output))
 
     elif self.chosen_divergence == "JSD":
-      activation_output = torch.log(torch.tensor(2.)) - torch.log(1. + torch.exp(-output))
-      return -torch.mean(-torch.log(2.0 - torch.exp(activation_output)))
+      activation_G_output = torch.log(torch.tensor(2.)) - torch.log(1. + torch.exp(-G_output))
+      return -torch.mean(-torch.log(2.0 - torch.exp(activation_G_output)))
 
     elif self.chosen_divergence == "GAN":
-      activation_output = -torch.log(1. + torch.exp(-output))
-      return -torch.mean(-torch.log(1 - torch.exp(activation_output)))
+      activation_G_output = -torch.log(1. + torch.exp(-G_output))
+      return -torch.mean(-torch.log(1 - torch.exp(activation_G_output)))
 
 
 class DiscriminatorLoss:
