@@ -37,30 +37,36 @@ class DiscriminatorLoss:
   def __init__(self, chosen_divergence):
     self.chosen_divergence = chosen_divergence
 
-  def compute_loss(self, output):
+  def compute_loss(self, D_output_on_real, D_output_on_fake):
     if self.chosen_divergence == "KLD":
-      activation_output = output
-      return torch.mean(activation_output) - torch.mean(torch.exp(activation_output-1))
+      activation_output_real = D_output_on_real
+      activation_output_fake = D_output_on_fake
+      return torch.mean(activation_output_real) - torch.mean(torch.exp(activation_output_fake-1))
     
     elif self.chosen_divergence == "RKL":
-      activation_output = -torch.exp(-output)
-      return torch.mean(activation_output) - torch.mean(-1 - torch.log(-activation_output))
+      activation_output_real = -torch.exp(-D_output_on_real) 
+      activation_output_fake = -torch.exp(-D_output_on_fake)
+      return torch.mean(activation_output_real) - torch.mean(-1 - torch.log(-activation_output_fake))
     
     elif self.chosen_divergence == "CHI":
-      activation_output = output
-      return torch.mean(activation_output) - torch.mean(0.25 * activation_output**2 + activation_output)
+      activation_output_real = D_output_on_real 
+      activation_output_fake = D_output_on_fake
+      return torch.mean(activation_output_real) - torch.mean(0.25 * activation_output_fake**2 + activation_output_fake)
 
     elif self.chosen_divergence == "SQH":
-      activation_output = 1-torch.exp(-output),
-      return torch.mean(activation_output) - torch.mean(output / (1. - output))
+      activation_output_real = 1-torch.exp(-D_output_on_real)
+      activation_output_fake = 1-torch.exp(-D_output_on_fake)
+      return torch.mean(activation_output_real) - torch.mean(activation_output_fake / (1. - activation_output_fake))
     
     elif self.chosen_divergence == "JSD":
-      activation_output = torch.log(torch.tensor(2.)) - torch.log(1.0+torch.exp(-output))
-      return torch.mean(activation_output) - torch.mean(-torch.log(2.0 - torch.exp(activation_output)))
+      activation_output_real = torch.log(torch.tensor(2.)) - torch.log(1.0+torch.exp(-D_output_on_real))
+      activation_output_fake = torch.log(torch.tensor(2.)) - torch.log(1.0+torch.exp(-D_output_on_fake))
+      return torch.mean(activation_output_real) - torch.mean(-torch.log(2.0 - torch.exp(activation_output_fake)))
     
     elif self.chosen_divergence == "GAN":
-      activation_output = -torch.log(1.0 + torch.exp(-output)), 
-      return torch.mean(activation_output) - torch.mean(-torch.log(1 - torch.exp(activation_output)))
+      activation_output_real = -torch.log(1.0 + torch.exp(-D_output_on_real))
+      activation_output_fake = -torch.log(1.0 + torch.exp(-D_output_on_fake))  
+      return torch.mean(activation_output_real) - torch.mean(-torch.log(1 - torch.exp(activation_output_fake)))
     
 
 ACTIVATIONS = {
