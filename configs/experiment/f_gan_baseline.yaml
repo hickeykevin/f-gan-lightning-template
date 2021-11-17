@@ -42,6 +42,7 @@ callbacks:
     log: "all"
     log_freq: 100
 
+test_after_training: False
 
 name: f_gan_baseline
 

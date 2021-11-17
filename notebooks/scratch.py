@@ -69,5 +69,5 @@ g = Generator(784, 64, 100)
 x = torch.randn(64, 1, 28, 28)
 z = torch.randn(64, 100)
 
-g.forward(z).size()
+zz = g.forward(z)
 # %%
