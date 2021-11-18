@@ -6,7 +6,7 @@
 defaults:
   - override /trainer: one_class.yaml
   - override /model: one_class.yaml
-  - override /datamodule: mnist_datamodule.yaml
+  - override /datamodule: one_class_mnist_datamodule.yaml
   - override /callbacks: wandb_one_class.yaml
 
 trainer:
@@ -20,13 +20,7 @@ model:
   hidden_dim: 128                
   lr: 0.001
   rep_dim: 16
-  l2_weight: 1e-2
-  
-  #use_batch_norm: False
-  #layer_1_size: 64
-  #layer_2_size: 0
-  #layer_3_size: 16
-  #layer_4_size: 0                     
+  l2_weight: 1e-2                    
 
 datamodule:
   batch_size: 64                
