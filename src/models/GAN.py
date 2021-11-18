@@ -5,7 +5,7 @@ from src.models.modules.loss_modules import DiscriminatorLoss, GeneratorLoss
 from pytorch_lightning import LightningModule
 
 import torch
-from collections import OrderedDict
+from torchmetrics import Accuracy
 from torchvision.utils import make_grid
 
 
@@ -37,6 +37,7 @@ class LitFGAN(LightningModule):
     self.validation_z = torch.randn(self.batch_size, self.latent_dim)
     self.g_criterion = GeneratorLoss(chosen_divergence = self.chosen_divergence)
     self.d_criterion = DiscriminatorLoss(chosen_divergence = self.chosen_divergence)
+    self.d_accuracy_on_generated_instances = Accuracy(num_classes=1)
 
   def forward(self, z):
     return self.generator.forward(z)
@@ -74,8 +75,11 @@ class LitFGAN(LightningModule):
       # Loss calculation for discriminator 
       loss_D = self.d_criterion.compute_loss(discriminator_output_real_imgs, discriminator_output_generated_imgs)
 
-      self.log("train/D_loss", loss_D, on_epoch=True)
+      self.d_accuracy_on_generated_instances(discriminator_output_generated_imgs, torch.ones((imgs.size()[0], 1), dtype=torch.int8))
 
+      self.log("train/D_loss", loss_D, on_epoch=True)
+      #self.log("train/D_accuracy_generated_instances", self.d_accuracy_on_generated_instances, on_epoch=True)
+      
       output = {"loss": loss_D}
       return output
         
