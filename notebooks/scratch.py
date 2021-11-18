@@ -2,6 +2,7 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchmetrics import Accuracy
 
 class V(nn.Module):
   def __init__(self):
@@ -44,9 +45,9 @@ class V(nn.Module):
 
     return x
 # %%
-v = V()
+acc = Accuracy(num_classes=2)
 x = torch.randn(64, 1, 28, 28)
-v.forward(x)
+y = torch.ones(size=(x.size()[0], 1))
 
 
 

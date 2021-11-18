@@ -321,15 +321,17 @@ class LogGeneratedImages(Callback):
               pl_module.hparams.latent_dim).to(device=pl_module.device)
 
             # run the batch through the network
-            generated_images = pl_module.forward(validation_z).unflatten(-1, self.img_shape)
-            generated_images_logging = [wandb.Image(x) for x in generated_images[:self.num_samples]]
-            #generated_images = make_grid(generated_images[:8])
+            generated_images = pl_module.forward(validation_z)
+            discriminator_predictions = pl_module.discriminator.forward(generated_images)
+            image_predictions_zip = list(zip(generated_images.unflatten(-1, self.img_shape), discriminator_predictions))
+            
+            generated_image_prediction_logging = [wandb.Image(x, caption=f"D Pred: {d}") for x, d in image_predictions_zip[:self.num_samples]]
 
             # log the images as wandb Image
             experiment.log(
                 {
                     f"Generated Images/{experiment.name}": [
-                        x for x in generated_images_logging
+                        x for x in generated_image_prediction_logging
                     ]
                 }
             )

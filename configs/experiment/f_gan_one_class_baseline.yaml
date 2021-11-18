@@ -47,5 +47,5 @@ callbacks:
 
 test_after_training: False
 
-name: f_gan_baseline
+name: f_gan_one_class_baseline
 

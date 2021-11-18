@@ -10,7 +10,7 @@ defaults:
   - _self_
   - trainer: one_class.yaml                   #SPECIFYING ONE CLASS SPECIFIC TRAINER CONFIGS
   - model: one_class.yaml                     #EXAMPLE: SPECIFYING ONE CLASS SPECIFIC MODEL CONFIGS
-  - datamodule: mnist_datamodule.yaml         #THIS WOULD BE ANY DATASET WE WANT TO USE AS DEFAULT
+  - datamodule: one_class_mnist_datamodule.yaml         #THIS WOULD BE ANY DATASET WE WANT TO USE AS DEFAULT
   - callbacks: wandb_one_class.yaml                     #THIS HAS CONFIGS FOR ALL CALLBACKS THAT WE'VE CREATED IN THE src.callbacks.wandb_callbacks.py FILE
   - logger: wandb # set logger here or use command line (e.g. `python run.py logger=wandb`)
   #NOT SURE IF THIS IS SUPPOSED TO BE wandb.yaml OR NOT, SINCE ALL THE ABOVE ARE???

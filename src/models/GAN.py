@@ -75,10 +75,10 @@ class LitFGAN(LightningModule):
       # Loss calculation for discriminator 
       loss_D = self.d_criterion.compute_loss(discriminator_output_real_imgs, discriminator_output_generated_imgs)
 
-      self.d_accuracy_on_generated_instances(discriminator_output_generated_imgs, torch.ones((imgs.size()[0], 1), dtype=torch.int8))
+      self.d_accuracy_on_generated_instances(discriminator_output_generated_imgs, torch.zeros((imgs.size()[0], 1), dtype=torch.int8))
 
       self.log("train/D_loss", loss_D, on_epoch=True)
-      #self.log("train/D_accuracy_generated_instances", self.d_accuracy_on_generated_instances, on_epoch=True)
+      self.log("train/D_accuracy_generated_instances", self.d_accuracy_on_generated_instances, on_epoch=True)
       
       output = {"loss": loss_D}
       return output
