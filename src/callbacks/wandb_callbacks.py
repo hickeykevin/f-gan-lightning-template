@@ -267,15 +267,19 @@ class LogOneClassPredictions(Callback):
         # get a validation batch from the validation dat loader
         val_samples = next(iter(trainer.datamodule.val_dataloader()))
         val_imgs, val_labels = val_samples
-
-        val_labels[val_labels != trainer.datamodule.chosen_class] = 0
-        val_labels[val_labels == trainer.datamodule.chosen_class] = 1
+        if trainer.datamodule.chosen_class == 0 or trainer.datamodule.chosen_class == 1:
+            val_labels[val_labels != trainer.datamodule.chosen_class] = -1
+            val_labels[val_labels == trainer.datamodule.chosen_class] = 1
+            val_labels[val_labels == -1] = 0
+        else:
+            val_labels[val_labels != trainer.datamodule.chosen_class] = 0
+            val_labels[val_labels == trainer.datamodule.chosen_class] = 1
+        
 
         # run the batch through the network
         val_imgs = val_imgs.to(device=pl_module.device)
         val_imgs_reshape = val_imgs.reshape(-1, val_imgs.size()[-2] * val_imgs.size()[-1])
         scores = pl_module.forward(val_imgs_reshape)
-        #preds = torch.argmax(logits, dim=-1)
 
         # log the images as wandb Image
         experiment.log(

@@ -11,7 +11,7 @@ defaults:
 
 trainer:
   min_epochs: 1
-  max_epochs: 100              
+  max_epochs: 50              
   num_sanity_val_steps: 0 #need this to prevent PL sanity check throwing error that center is not defined
   gpus: 0       
 
