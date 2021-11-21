@@ -1,8 +1,9 @@
 #kevin's deep ocsvm translation into pytorch lightinng module
 import pytorch_lightning as pl
 import torch
+import torchmetrics
 from src.models.modules.one_class_feedforward import FeedforwardNeuralNetModel
-from torchmetrics import AUROC, PrecisionRecallCurve
+from torchmetrics import AUROC, PrecisionRecallCurve, Precision, Recall
 
 
 class LitDeepOCSVM(pl.LightningModule):
@@ -28,7 +29,7 @@ class LitDeepOCSVM(pl.LightningModule):
                                             rep_dim = self.rep_dim).to(self.device)
     #self.model = Network(self.input_dim, kwargs, use_batch_norm=True)
     self.auroc = AUROC(num_classes=2, pos_label=1)
-    self.pr_curve = PrecisionRecallCurve(num_classes=2, pos_label=1)
+    self.pr_curve = PrecisionRecallCurve()
   
   def forward(self, x):
       #return anomoly score for a given instance
@@ -87,15 +88,12 @@ class LitDeepOCSVM(pl.LightningModule):
       #make negative for auroc score to give meaningful representation
       score = -(torch.norm(f_X - self.center, dim=1)**2)
       self.auroc(score, y)
-      #precision, recall, thresholds = self.pr_curve(score, y)
 
       #log epoch level loss and auroc scores
       self.log("val/loss", loss, on_step=True, on_epoch=True, prog_bar=True)
       self.log("val/auroc", self.auroc, on_step=True, on_epoch=True)
-      #self.log("val/precision", precision, on_epoch=True )
-
       
-      return {"loss": loss}
+      return {"loss": loss, "score": score, "targets": y}
 
 
 

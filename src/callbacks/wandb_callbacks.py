@@ -180,13 +180,13 @@ class LogConfusionMatrix(Callback):
             self.targets.clear()
 
 
-class LogF1PrecRecHeatmap(Callback):
+class LogPrecRecHeatmap(Callback):
     """Generate f1, precision, recall heatmap every epoch and send it to wandb.
     Expects validation step to return predictions and targets.
     """
 
     def __init__(self, class_names: List[str] = None):
-        self.preds = []
+        self.scores = []
         self.targets = []
         self.ready = True
 
@@ -202,7 +202,7 @@ class LogF1PrecRecHeatmap(Callback):
     ):
         """Gather data from single batch."""
         if self.ready:
-            self.preds.append(outputs["preds"])
+            self.scores.append(outputs["score"])
             self.targets.append(outputs["targets"])
 
     def on_validation_epoch_end(self, trainer, pl_module):
@@ -211,12 +211,11 @@ class LogF1PrecRecHeatmap(Callback):
             logger = get_wandb_logger(trainer=trainer)
             experiment = logger.experiment
 
-            preds = torch.cat(self.preds).cpu().numpy()
+            scores = torch.cat(self.scores).cpu().numpy()
             targets = torch.cat(self.targets).cpu().numpy()
-            f1 = f1_score(targets, preds, average=None)
-            r = recall_score(targets, preds, average=None)
-            p = precision_score(targets, preds, average=None)
-            data = [f1, p, r]
+            r = recall_score(targets, scores, average=None)
+            p = precision_score(targets, scores, average=None)
+            data = [p, r]
 
             # set figure size
             plt.figure(figsize=(14, 3))

@@ -35,6 +35,7 @@ callbacks:
     _target_: src.callbacks.wandb_callbacks.UploadCheckpointsAsArtifact
     ckpt_dir: "checkpoints/"
     upload_best_only: True 
+  
 
   log_generated_images:
     _target_: src.callbacks.wandb_callbacks.LogGeneratedImages
