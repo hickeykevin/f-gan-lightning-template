@@ -47,6 +47,6 @@ class Discriminator(nn.Module):
 
     def forward(self, x):
         activated = F.relu(self.linear(x))
-        discrimination = torch.sigmoid(self.discriminate(activated))
+        discrimination = self.discriminate(activated)
         return discrimination
 #taken from https://github.com/shayneobrien/generative-models/blob/74fbe414f81eaed29274e273f1fb6128abdb0ff5/src/f_gan.py
