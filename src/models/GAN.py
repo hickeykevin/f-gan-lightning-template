@@ -5,6 +5,7 @@ from src.models.modules.loss_modules import DiscriminatorLoss, GeneratorLoss
 from pytorch_lightning import LightningModule
 
 import torch
+from torch.distributions.uniform import Uniform
 from torchmetrics import Accuracy
 from torchvision.utils import make_grid
 
@@ -14,7 +15,7 @@ class LitFGAN(LightningModule):
       self,
       latent_dim: int = 100,
       img_size = 784,
-      hidden_dim = 64,
+      hidden_dim = 512,
       output_dim = 1,
       lr: float = 0.0002,
       chosen_divergence: str = "KLD",
@@ -45,11 +46,10 @@ class LitFGAN(LightningModule):
   def training_step(self, batch, batch_idx, optimizer_idx):
     imgs, _ = batch
 
-
     # Train generator
     if optimizer_idx == 0:
       # Create sample of noise
-      z = torch.randn(self.batch_size, self.hparams.latent_dim).type_as(imgs)
+      z = Uniform(-1, 1).sample(self.batch_size, self.hparams.latent_dim).type_as(imgs)
       generated_images = self.forward(z)
 
       # Discriminator output on generated instances
@@ -70,7 +70,7 @@ class LitFGAN(LightningModule):
       
       # Discriminator output on fake instances
       # Create sample of noise
-      z = torch.randn(self.batch_size, self.hparams.latent_dim).type_as(imgs)
+      z = Uniform(-1, 1).sample(self.batch_size, self.hparams.latent_dim).type_as(imgs)
       generated_images = self.forward(z)
       discriminator_output_generated_imgs = self.discriminator.forward(generated_images)
       
