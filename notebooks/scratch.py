@@ -3,7 +3,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchmetrics import Accuracy
-
+#%%
 class V(nn.Module):
   def __init__(self):
     super(V, self).__init__()
@@ -45,9 +45,12 @@ class V(nn.Module):
 
     return x
 # %%
-acc = Accuracy(num_classes=2)
-x = torch.randn(64, 1, 28, 28)
-y = torch.ones(size=(x.size()[0], 1))
+acc = Accuracy(num_classes=1)
+x = torch.tensor([0., 0., 0., 0., 1.])
+y = torch.zeros(5, dtype=int)
+
+score = acc(x, y)
+print(score)
 
 
 

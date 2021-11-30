@@ -5,6 +5,7 @@ from typing import List
 import matplotlib.pyplot as plt
 import seaborn as sn
 import torch
+from torch.distributions.uniform import Uniform
 import wandb
 from pytorch_lightning import Callback, Trainer
 from pytorch_lightning.loggers import LoggerCollection, WandbLogger
@@ -319,9 +320,9 @@ class LogGeneratedImages(Callback):
         if self.ready:
             logger = get_wandb_logger(trainer=trainer)
             experiment = logger.experiment
-            validation_z = torch.randn(
+            validation_z = Uniform(-1, 1).sample([
               trainer.datamodule.batch_size, 
-              pl_module.hparams.latent_dim).to(device=pl_module.device)
+              pl_module.hparams.latent_dim]).to(device=pl_module.device)
 
             # run the batch through the network
             generated_images = pl_module.forward(validation_z)

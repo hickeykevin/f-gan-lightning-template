@@ -49,7 +49,7 @@ class LitFGAN(LightningModule):
     # Train generator
     if optimizer_idx == 0:
       # Create sample of noise
-      z = Uniform(-1, 1).sample(self.batch_size, self.hparams.latent_dim).type_as(imgs)
+      z = Uniform(-1, 1).sample([self.batch_size, self.hparams.latent_dim]).type_as(imgs)
       generated_images = self.forward(z)
 
       # Discriminator output on generated instances
@@ -70,7 +70,7 @@ class LitFGAN(LightningModule):
       
       # Discriminator output on fake instances
       # Create sample of noise
-      z = Uniform(-1, 1).sample(self.batch_size, self.hparams.latent_dim).type_as(imgs)
+      z = Uniform(-1, 1).sample([self.batch_size, self.hparams.latent_dim]).type_as(imgs)
       generated_images = self.forward(z)
       discriminator_output_generated_imgs = self.discriminator.forward(generated_images)
       
