@@ -46,7 +46,7 @@ class V(nn.Module):
     return x
 # %%
 acc = Accuracy(num_classes=1)
-x = torch.tensor([0., 0., 0., 0., 1.])
+x = torch.tensor([0.6, 0., 0., 0., 1.])
 y = torch.zeros(5, dtype=int)
 
 score = acc(x, y)

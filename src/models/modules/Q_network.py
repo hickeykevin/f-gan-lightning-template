@@ -44,10 +44,27 @@ class Generator(nn.Module):
     def __init__(self, image_size, hidden_dim, z_dim):
         super().__init__()
         self.linear = nn.Linear(z_dim, hidden_dim)
+        self.batch_norm = nn.BatchNorm1d(hidden_dim)
         self.generate = nn.Linear(hidden_dim, image_size)
 
     def forward(self, x):
-        activated = F.relu(self.linear(x))
+        activated = F.relu(self.batch_norm(self.linear(x)))
+        generation = torch.sigmoid(self.generate(activated))
+        return generation
+
+class GeneratorMultipleLayers(nn.Module):
+    """ Generator. Input is noise, output is a generated image.
+    """
+    def __init__(self, image_size, hidden_dim, z_dim):
+        super().__init__()
+        self.linear_one = nn.Linear(z_dim, hidden_dim)
+        self.linear_two = nn.Linear(hidden_dim, hidden_dim)
+        self.batch_norm = nn.BatchNorm1d(hidden_dim)
+        self.generate = nn.Linear(hidden_dim, image_size)
+
+    def forward(self, x):
+        activated = F.relu(self.batch_norm(self.linear_one(x)))
+        activated = F.relu(self.batch_norm(self.linear_two(activated)))
         generation = torch.sigmoid(self.generate(activated))
         return generation
 

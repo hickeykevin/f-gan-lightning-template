@@ -1,5 +1,5 @@
-from src.models.modules.Q_network import Generator
-from src.models.modules.V_network import Discriminator
+from src.models.modules.Q_network import Generator, GeneratorMultipleLayers
+from src.models.modules.V_network import Discriminator, DiscriminatorMultipleLayers
 
 from src.models.modules.loss_modules import DiscriminatorLoss, GeneratorLoss
 from pytorch_lightning import LightningModule
@@ -32,10 +32,9 @@ class LitFGAN(LightningModule):
     self.batch_size = batch_size
     self.save_hyperparameters()
 
-    self.generator = Generator(image_size=self.img_size, hidden_dim=self.hidden_dim, z_dim=self.latent_dim).to(self.device)
-    self.discriminator = Discriminator(image_size=self.img_size, hidden_dim=self.hidden_dim, output_dim=self.output_dim).to(self.device)
+    self.generator = GeneratorMultipleLayers(image_size=self.img_size, hidden_dim=self.hidden_dim, z_dim=self.latent_dim).to(self.device)
+    self.discriminator = DiscriminatorMultipleLayers(image_size=self.img_size, hidden_dim=self.hidden_dim, output_dim=self.output_dim).to(self.device)
     
-    self.validation_z = torch.randn(self.batch_size, self.latent_dim)
     self.g_criterion = GeneratorLoss(chosen_divergence = self.chosen_divergence)
     self.d_criterion = DiscriminatorLoss(chosen_divergence = self.chosen_divergence)
     self.d_accuracy_on_generated_instances = Accuracy(num_classes=1)

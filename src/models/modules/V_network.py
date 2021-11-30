@@ -46,7 +46,24 @@ class Discriminator(nn.Module):
         self.discriminate = nn.Linear(hidden_dim, output_dim)
 
     def forward(self, x):
-        activated = F.relu(self.linear(x))
+        activated = F.elu(self.linear(x))
+        discrimination = self.discriminate(activated)
+        return discrimination
+
+
+class DiscriminatorMultipleLayers(nn.Module):
+    """ Discriminator. Input is an image (real or generated),
+    output is P(generated).
+    """
+    def __init__(self, image_size, hidden_dim, output_dim):
+        super().__init__()
+        self.linear_one = nn.Linear(image_size, hidden_dim)
+        self.linear_two = nn.Linear(hidden_dim, hidden_dim)
+        self.discriminate = nn.Linear(hidden_dim, output_dim)
+
+    def forward(self, x):
+        activated = F.elu(self.linear_one(x))
+        activated = F.elu(self.linear_two(activated))
         discrimination = self.discriminate(activated)
         return discrimination
 #taken from https://github.com/shayneobrien/generative-models/blob/74fbe414f81eaed29274e273f1fb6128abdb0ff5/src/f_gan.py
