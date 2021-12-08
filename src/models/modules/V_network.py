@@ -42,13 +42,13 @@ class Discriminator(nn.Module):
     """
     def __init__(self, image_size, hidden_dim, output_dim):
         super().__init__()
-        self.linear = nn.Linear(image_size, hidden_dim)
-        self.discriminate = nn.Linear(hidden_dim, output_dim)
+        self.linear_one = nn.Linear(image_size, hidden_dim)
+        self.linear_two = nn.Linear(hidden_dim, output_dim)
 
     def forward(self, x):
-        activated = F.elu(self.linear(x))
-        discrimination = self.discriminate(activated)
-        return discrimination
+        x = F.elu(self.linear(x))
+        x = self.linear_two(x)
+        return x
 
 
 class DiscriminatorMultipleLayers(nn.Module):
@@ -59,11 +59,11 @@ class DiscriminatorMultipleLayers(nn.Module):
         super().__init__()
         self.linear_one = nn.Linear(image_size, hidden_dim)
         self.linear_two = nn.Linear(hidden_dim, hidden_dim)
-        self.discriminate = nn.Linear(hidden_dim, output_dim)
+        self.linear_three = nn.Linear(hidden_dim, output_dim)
 
     def forward(self, x):
-        activated = F.elu(self.linear_one(x))
-        activated = F.elu(self.linear_two(activated))
-        discrimination = self.discriminate(activated)
-        return discrimination
+        x = F.elu(self.linear_one(x))
+        x = F.elu(self.linear_two(x))
+        x = self.linear_three(x)
+        return x
 #taken from https://github.com/shayneobrien/generative-models/blob/74fbe414f81eaed29274e273f1fb6128abdb0ff5/src/f_gan.py

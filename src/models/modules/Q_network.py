@@ -60,13 +60,13 @@ class GeneratorMultipleLayers(nn.Module):
         self.linear_one = nn.Linear(z_dim, hidden_dim)
         self.linear_two = nn.Linear(hidden_dim, hidden_dim)
         self.batch_norm = nn.BatchNorm1d(hidden_dim)
-        self.generate = nn.Linear(hidden_dim, image_size)
+        self.linear_three = nn.Linear(hidden_dim, image_size)
 
     def forward(self, x):
-        activated = F.relu(self.batch_norm(self.linear_one(x)))
-        activated = F.relu(self.batch_norm(self.linear_two(activated)))
-        generation = torch.sigmoid(self.generate(activated))
-        return generation
+        x = F.relu(self.batch_norm(self.linear_one(x)))
+        x = F.relu(self.batch_norm(self.linear_two(x)))
+        x = torch.sigmoid(self.linear_three(x))
+        return x
 
 
 

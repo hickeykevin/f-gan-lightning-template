@@ -19,7 +19,8 @@ class LitFGAN(LightningModule):
       output_dim = 1,
       lr: float = 0.0002,
       chosen_divergence: str = "KLD",
-      batch_size=64
+      batch_size=64,
+      adam_beta_one: float = 0.5
               ):
     
     super().__init__()
@@ -30,6 +31,7 @@ class LitFGAN(LightningModule):
     self.lr = lr
     self.chosen_divergence = chosen_divergence
     self.batch_size = batch_size
+    self.adam_beta_one = adam_beta_one
     self.save_hyperparameters()
 
     self.generator = GeneratorMultipleLayers(image_size=self.img_size, hidden_dim=self.hidden_dim, z_dim=self.latent_dim).to(self.device)
@@ -86,8 +88,8 @@ class LitFGAN(LightningModule):
         
       
   def configure_optimizers(self):
-    optimizer_G = torch.optim.Adam(self.generator.parameters(), lr=self.hparams.lr)
-    optimizer_D = torch.optim.Adam(self.discriminator.parameters(), lr=self.hparams.lr)
+    optimizer_G = torch.optim.Adam(self.generator.parameters(), lr=self.hparams.lr, betas=(self.adam_beta_one, 0.999))
+    optimizer_D = torch.optim.Adam(self.discriminator.parameters(), lr=self.hparams.lr, betas=(self.adam_beta_one, 0.999))
 
     return [optimizer_G, optimizer_D]
 
