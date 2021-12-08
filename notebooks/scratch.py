@@ -2,76 +2,30 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from torchvision.datasets import MNIST
+import torchvision.transforms as transforms
 from torchmetrics import Accuracy
 #%%
-class V(nn.Module):
-  def __init__(self):
-    super(V, self).__init__()
-
-    self.c_dim=1
-    self.df_dim = 64
-    
-    self.conv_layer = nn.Conv2d(self.c_dim, self.df_dim, 4, stride=2, padding=1, bias=False)
-    
-    self.conv_bn_layer_1 = nn.Sequential(
-        nn.Conv2d(self.df_dim, self.df_dim*2, 4, stride=2, padding=1, bias=False),
-        nn.BatchNorm2d(self.df_dim*2))
-
-    self.conv_bn_layer_2 = nn.Sequential(
-        nn.Conv2d(self.df_dim*2, self.df_dim*4, 4, stride=2, padding=1, bias=False),
-        nn.BatchNorm2d(self.df_dim*4)) 
-
-    self.conv_bn_layer_3 = nn.Sequential(
-        nn.Conv2d(self.df_dim*4, self.df_dim*8, 4, stride=2, padding=1, bias=False),
-        nn.BatchNorm2d(self.df_dim*8))
-
-    self.flatten = nn.Flatten(1)
-    self.fc_layer = nn.Linear(self.df_dim*8, 1, bias=False)
-
-  def forward(self, x):
-    print(x.size())
-    x = F.leaky_relu(self.conv_layer(x), 0.01)
-    print(x.size())
-    x = F.leaky_relu(self.conv_bn_layer_1(x), 0.01)
-    print(x.size())
-    x = F.leaky_relu(self.conv_bn_layer_2(x), 0.01)
-    print(x.size())
-    x = F.leaky_relu(self.conv_bn_layer_3(x), 0.01)
-    print(x.size())
-    x = self.flatten(x)
-    print(x.size())
-    x = self.fc_layer(x)
-    print(x.size())
-
-    return x
+data_dir: str = "../data/"
+train_one_class: bool = True
+train_val_test_split = (55000, 5000, 10000)
+batch_size: int = 64
+num_workers: int = 0
+pin_memory: bool = False
+chosen_class = [7]
+transform = transforms.Compose(
+            [transforms.ToTensor(), 
+            transforms.Normalize((0.1307,), (0.3081,))
+            ]
+        )
+#MNIST(data_dir, train=True, download=True)
+#MNIST(data_dir, train=False, download=True)
+trainset = MNIST(data_dir, train=True, transform=transforms)
+testset = MNIST(data_dir, train=False, transform=transform)
+            
 # %%
-acc = Accuracy(num_classes=1)
-x = torch.tensor([0.6, 0., 0., 0., 1.])
-y = torch.zeros(5, dtype=int)
-
-score = acc(x, y)
-print(score)
-
-
-
-# %%
-class Generator(nn.Module):
-    """ Generator. Input is noise, output is a generated image.
-    """
-    def __init__(self, image_size, hidden_dim, z_dim):
-        super().__init__()
-        self.linear = nn.Linear(z_dim, hidden_dim)
-        self.generate = nn.Linear(hidden_dim, image_size)
-
-    def forward(self, x):
-        activated = F.relu(self.linear(x))
-        generation = torch.sigmoid(self.generate(activated))
-        return generation
-# %%
-g = Generator(784, 64, 100)
-
-x = torch.randn(64, 1, 28, 28)
-z = torch.randn(64, 100)
-
-zz = g.forward(z)
+chosen_class = [7, 5]
+if train_one_class:
+    indices = torch.isin(torch.tensor(trainset.targets)[..., None], torch.tensor([chosen_class])).any(-1).nonzero(as_tuple=True)[0]
+torch.utils.data.Subset(trainset, indices)
 # %%
