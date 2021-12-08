@@ -9,3 +9,4 @@ output_dim: 1
 lr: 0.0002
 chosen_divergence: "KLD"
 batch_size: 64
+adam_beta_one: 0.5
