@@ -23,14 +23,21 @@ datamodule:
   num_workers: 0
   pin_memory: False
   chosen_class:
-  - 7
+  - 0
+  - 1
+  - 2
   - 3
-
+  - 4
+  - 5
+  - 6
+  - 7
+  - 8
+  - 9
 trainer:
     min_epochs: 1
     max_epochs: 50
     gpus: 0
-
+    # gradient_clip_val: 1
 model:
     batch_size: ${datamodule.batch_size}
     lr: 0.0002

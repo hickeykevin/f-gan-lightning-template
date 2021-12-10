@@ -5,6 +5,7 @@ import torch.nn.functional as F
 from torchvision.datasets import MNIST
 import torchvision.transforms as transforms
 from torchmetrics import Accuracy
+from torch.distributions.multivariate_normal import MultivariateNormal
 #%%
 data_dir: str = "../data/"
 train_one_class: bool = True
@@ -28,4 +29,7 @@ chosen_class = [7, 5]
 if train_one_class:
     indices = torch.isin(torch.tensor(trainset.targets)[..., None], torch.tensor([chosen_class])).any(-1).nonzero(as_tuple=True)[0]
 torch.utils.data.Subset(trainset, indices)
+# %%
+noise_z = MultivariateNormal(torch.zeros(784, torch.eye(784))).sample()
+
 # %%

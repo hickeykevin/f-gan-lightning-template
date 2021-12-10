@@ -6,6 +6,7 @@ from pytorch_lightning import LightningModule
 
 import torch
 from torch.distributions.uniform import Uniform
+from torch.distributions.multivariate_normal import MultivariateNormal
 from torchmetrics import Accuracy
 from torchvision.utils import make_grid
 
@@ -44,14 +45,20 @@ class LitFGAN(LightningModule):
   def forward(self, z):
     return self.generator.forward(z)
 
+  def sample_z(self, n):
+    z = Uniform(-1, 1).sample([n, self.hparams.latent_dim])
+    return z
+
   def training_step(self, batch, batch_idx, optimizer_idx):
     imgs, _ = batch
-
+  
     # Train generator
     if optimizer_idx == 0:
       # Create sample of noise
       z = Uniform(-1, 1).sample([self.batch_size, self.hparams.latent_dim]).type_as(imgs)
       generated_images = self.forward(z)
+      noise_z = MultivariateNormal(torch.zeros(self.img_size), torch.eye(self.img_size)).sample(torch.Size([self.batch_size]))
+      generated_images = generated_images + noise_z
 
       # Discriminator output on generated instances
       discriminator_output_generated_imgs = self.discriminator.forward(generated_images)
@@ -67,12 +74,18 @@ class LitFGAN(LightningModule):
     # Train discriminator
     elif optimizer_idx == 1:
       # Discriminator output on real instances
-      discriminator_output_real_imgs = self.discriminator.forward(imgs.view(self.batch_size, -1))
+      # note, try lambda * torch.eye
+      noise_z = MultivariateNormal(torch.zeros(self.img_size), torch.eye(self.img_size)).sample(torch.Size([self.batch_size]))
+      imgs = imgs.view(self.batch_size, -1) + noise_z
+      discriminator_output_real_imgs = self.discriminator.forward(imgs)
       
       # Discriminator output on fake instances
       # Create sample of noise
       z = Uniform(-1, 1).sample([self.batch_size, self.hparams.latent_dim]).type_as(imgs)
       generated_images = self.forward(z)
+      noise_z = MultivariateNormal(torch.zeros(self.img_size), torch.eye(self.img_size)).sample(torch.Size([self.batch_size]))
+      generated_images = generated_images + noise_z
+
       discriminator_output_generated_imgs = self.discriminator.forward(generated_images)
       
       # Loss calculation for discriminator 
@@ -85,13 +98,13 @@ class LitFGAN(LightningModule):
       
       output = {"loss": loss_D}
       return output
-        
+
       
   def configure_optimizers(self):
-    optimizer_G = torch.optim.Adam(self.generator.parameters(), lr=self.hparams.lr, betas=(self.adam_beta_one, 0.999))
-    optimizer_D = torch.optim.Adam(self.discriminator.parameters(), lr=self.hparams.lr, betas=(self.adam_beta_one, 0.999))
+      optimizer_G = torch.optim.Adam(self.generator.parameters(), lr=self.hparams.lr, betas=(self.adam_beta_one, 0.999))
+      optimizer_D = torch.optim.Adam(self.discriminator.parameters(), lr=0.1*self.hparams.lr, betas=(self.adam_beta_one, 0.999), weight_decay=1)
 
-    return [optimizer_G, optimizer_D]
+      return [optimizer_G, optimizer_D]
 
 
 
