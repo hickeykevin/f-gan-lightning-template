@@ -81,9 +81,10 @@ class LitFGAN(LightningModule):
       
       # Discriminator output on fake instances
       # Create sample of noise
+      labda = 1.5
       z = Uniform(-1, 1).sample([self.batch_size, self.hparams.latent_dim]).type_as(imgs)
       generated_images = self.forward(z)
-      noise_z = MultivariateNormal(torch.zeros(self.img_size), torch.eye(self.img_size)).sample(torch.Size([self.batch_size]))
+      noise_z = MultivariateNormal(torch.zeros(self.img_size), labda*torch.eye(self.img_size)).sample(torch.Size([self.batch_size]))
       generated_images = generated_images + noise_z
 
       discriminator_output_generated_imgs = self.discriminator.forward(generated_images)
