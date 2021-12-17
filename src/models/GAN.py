@@ -21,7 +21,10 @@ class LitFGAN(LightningModule):
       lr: float = 0.0002,
       chosen_divergence: str = "KLD",
       batch_size=64,
-      adam_beta_one: float = 0.5
+      adam_beta_one: float = 0.5,
+      noise_coefficient: float = 1.0,
+      anealing_factor: float = 0.9
+
               ):
     
     super().__init__()
@@ -33,6 +36,8 @@ class LitFGAN(LightningModule):
     self.chosen_divergence = chosen_divergence
     self.batch_size = batch_size
     self.adam_beta_one = adam_beta_one
+    self.noise_coefficient = noise_coefficient
+    self.anealing_factor = anealing_factor
     self.save_hyperparameters()
 
     self.generator = GeneratorMultipleLayers(image_size=self.img_size, hidden_dim=self.hidden_dim, z_dim=self.latent_dim).to(self.device)
@@ -81,7 +86,7 @@ class LitFGAN(LightningModule):
       
       # Discriminator output on fake instances
       # Create sample of noise
-      labda = 1.5
+      labda = self.noise_coefficient * (self.anealing_factor ** (self.current_epoch)) 
       z = Uniform(-1, 1).sample([self.batch_size, self.hparams.latent_dim]).type_as(imgs)
       generated_images = self.forward(z)
       noise_z = MultivariateNormal(torch.zeros(self.img_size), labda*torch.eye(self.img_size)).sample(torch.Size([self.batch_size]))
