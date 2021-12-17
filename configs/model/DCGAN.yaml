@@ -1,0 +1,10 @@
+# DCFGAN Lightning Module specific configurations
+
+_target_: src.models.DCFGAN.LitDCFGAN
+
+latent_dim: 100
+lr: 0.0002
+chosen_divergence: "KLD"
+batch_size: 64
+adam_beta_one: 0.5
+num_channels: 3
