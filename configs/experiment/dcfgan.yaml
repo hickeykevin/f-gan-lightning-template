@@ -22,7 +22,7 @@ trainer:
 
 model:
     batch_size: ${datamodule.batch_size}
-    num_channels: 1
+    num_channels: 3
 
 callbacks:
   upload_code_as_artifact:

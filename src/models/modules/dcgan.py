@@ -17,7 +17,7 @@ class Generator(nn.Module):
         
         self.main = nn.Sequential(
             # input is Z, going into a convolution
-            nn.ConvTranspose2d( latent_dim, 64 * 8, 4, 1, 0, bias=False),
+            nn.ConvTranspose2d(latent_dim, 64 * 8, 4, 1, 0, bias=False),
             nn.BatchNorm2d(64 * 8),
             nn.ReLU(True),
             # state size. (ngf*8) x 4 x 4
@@ -33,7 +33,7 @@ class Generator(nn.Module):
             nn.BatchNorm2d(64),
             nn.ReLU(True),
             # state size. (64) x 32 x 32
-            nn.ConvTranspose2d( 64, num_channel, 4, 2, 1, bias=False),
+            nn.ConvTranspose2d(64, num_channel, 4, 2, 1, bias=False),
             # state size. (num_channel) x 64 x 64
         )
 
@@ -47,22 +47,22 @@ class Discriminator(nn.Module):
         
         self.main = nn.Sequential(
             # input is (num_channel) x 64 x 64
-            nn.Conv2d(num_channel, 64, 4, 2, 1, bias=False),
+            nn.Conv2d(num_channel, 64, 4, 2, padding=1, bias=False),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (64) x 32 x 32
-            nn.Conv2d(64, 64 * 2, 4, 2, 1, bias=False),
+            nn.Conv2d(64, 64 * 2, 4, 2, padding=1, bias=False),
             nn.BatchNorm2d(64 * 2),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (64*2) x 16 x 16
-            nn.Conv2d(64 * 2, 64 * 4, 4, 2, 1, bias=False),
+            nn.Conv2d(64 * 2, 64 * 4, 4, 2, padding=1, bias=False),
             nn.BatchNorm2d(64 * 4),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (64*4) x 8 x 8
-            nn.Conv2d(64 * 4, 64 * 8, 4, 2, 1, bias=False),
+            nn.Conv2d(64 * 4, 64 * 8, 4, 2, padding=1, bias=False),
             nn.BatchNorm2d(64 * 8),
             nn.LeakyReLU(0.2, inplace=True),
             # state size. (64*8) x 4 x 4
-            nn.Conv2d(64 * 8, 1, 4, 1, 0, bias=False)
+            nn.Conv2d(64 * 8, 1, 4, 1, padding=0, bias=False)
         )
 
     def forward(self, x):

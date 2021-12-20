@@ -1,4 +1,3 @@
-#NEED TO THINK, DO I NEED THIS DEFAULT, OR JUST SPLIT INTO TWO SEPERATE FOR EACH TRAINER? 
 _target_: pytorch_lightning.Trainer
 
 # set `1` to train on GPU, `0` to train on CPU only

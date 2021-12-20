@@ -72,7 +72,7 @@ class LitDCFGAN(LightningModule):
 
             # Log Metrics
             self.log("train/D_loss", loss_D, on_epoch=True)
-            self.d_accuracy_on_generated_instances(torch.sigmoid(discriminator_output_generated_imgs), torch.zeros((imgs.size()[0], 1), dtype=torch.int8))
+            self.d_accuracy_on_generated_instances(torch.sigmoid(discriminator_output_generated_imgs.view(-1, 1)), torch.zeros((imgs.size()[0], 1), dtype=torch.int8))
             self.log("train/D_accuracy_generated_instances", self.d_accuracy_on_generated_instances, on_epoch=True)
 
             output = {"loss": loss_D}
@@ -80,12 +80,12 @@ class LitDCFGAN(LightningModule):
 
         
     def sample_z(self, n):
-        z = Uniform(-1, 1).sample([n, self.latent_dim, 1, 1])
+        z = torch.randn(n, self.latent_dim, 1, 1)
         return z
 
     def configure_optimizers(self):
         optimizer_G = torch.optim.Adam(self.generator.parameters(), lr=self.hparams.lr, betas=(self.adam_beta_one, 0.999))
-        optimizer_D = torch.optim.Adam(self.discriminator.parameters(), lr=0.1*self.hparams.lr, betas=(self.adam_beta_one, 0.999))
+        optimizer_D = torch.optim.Adam(self.discriminator.parameters(), lr=self.hparams.lr, betas=(self.adam_beta_one, 0.999))
 
         return [optimizer_G, optimizer_D]
 
