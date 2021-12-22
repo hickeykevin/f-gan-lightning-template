@@ -320,9 +320,7 @@ class LogGeneratedImages(Callback):
         if self.ready:
             logger = get_wandb_logger(trainer=trainer)
             experiment = logger.experiment
-            validation_z =pl_module.sample_z(
-                trainer.datamodule.batch_size, 
-                pl_module.hparams.latent_dim).to(device=pl_module.device)
+            validation_z = pl_module.sample_z(trainer.datamodule.batch_size).to(device=pl_module.device)
 
             # run the batch through the network
             generated_images = pl_module.forward(validation_z)
