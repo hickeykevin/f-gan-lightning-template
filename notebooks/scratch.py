@@ -1,4 +1,5 @@
 #%%
+%cd ..
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -9,31 +10,26 @@ from torch.distributions.multivariate_normal import MultivariateNormal
 from torchvision.transforms import transforms
 import numpy as np
 import PIL
+from src.datamodules.multi_channel_mnist_datamodule import MNISTDataModule
+import wandb
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 # %%
-z = torch.randn(64, 100, 1, 1)
-array = np.random.randint(255, size=(28, 28),dtype=np.uint8)
-array = np.expand_dims(array, axis=0)
-image = PIL.Image.fromarray(array)
-num_channel=3
-transform = transforms.Compose(
-    [
-            transforms.Resize(64), 
-            transforms.ToTensor(), 
-            transforms.Normalize((0.1307,), (0.3081,)),
-            transforms.Lambda(lambda x: x.repeat(1, 3, 1, 1))
-            ]
-        )
+m = MNISTDataModule()
+m.prepare_data()
+m.setup(stage=None)
+
 
 # %%
-ii = transform(image)
+X, y = next(iter(m.train_dataloader()))
+
 #%%
 class Generator(nn.Module):
     def __init__(self, num_channel, latent_dim):
         super(Generator, self).__init__()
         
-        self.block1 = 
         self.main = nn.Sequential(
             # input is Z, going into a convolution
             nn.ConvTranspose2d(latent_dim, 64 * 8, 4, 1, 0, bias=False),
@@ -88,10 +84,16 @@ class Discriminator(nn.Module):
         return self.main(x)
 # %%
 g = Generator(3, 100)
+z = torch.randn(64, 100, 1, 1)
 generated_image = g.forward(z)
 
 # %%
 d = Discriminator(3, 100)
 d_prediction_generated = d.forward(generated_image)
-d_prediction_real = d.forward(ii)
+d_prediction_real = d.forward(X)
+# %%
+image_predictions_zip = list(zip(generated_image.flatten(1, -1), d_prediction_generated.flatten(1, -1)))
+# %%
+x = list(zip(generated_image, d_prediction_generated.flatten(1, -1)))
+
 # %%

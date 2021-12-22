@@ -4,6 +4,8 @@ from pytorch_lightning import LightningModule
 import torch
 from torch.distributions.uniform import Uniform
 from torchmetrics import Accuracy
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
 
 
 class LitDCFGAN(LightningModule):
@@ -72,7 +74,8 @@ class LitDCFGAN(LightningModule):
 
             # Log Metrics
             self.log("train/D_loss", loss_D, on_epoch=True)
-            self.d_accuracy_on_generated_instances(torch.sigmoid(discriminator_output_generated_imgs.view(-1, 1)), torch.zeros((imgs.size()[0], 1), dtype=torch.int8))
+            fake_labels = torch.zeros(imgs.size()[0], 1, dtype=torch.int8).to(device=self.device)
+            self.d_accuracy_on_generated_instances(torch.sigmoid(discriminator_output_generated_imgs.view(-1, 1)), fake_labels)
             self.log("train/D_accuracy_generated_instances", self.d_accuracy_on_generated_instances, on_epoch=True)
 
             output = {"loss": loss_D}

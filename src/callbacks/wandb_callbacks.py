@@ -325,7 +325,7 @@ class LogGeneratedImages(Callback):
             # run the batch through the network
             generated_images = pl_module.forward(validation_z)
             discriminator_predictions = torch.sigmoid(pl_module.discriminator.forward(generated_images))
-            image_predictions_zip = list(zip(generated_images.unflatten(-1, self.img_shape), discriminator_predictions))
+            image_predictions_zip = list(zip(generated_images, discriminator_predictions.flatten(1, -1)))
             
             generated_image_prediction_logging = [wandb.Image(i, caption=f"D Pred: {p}") for i, p in image_predictions_zip[:self.num_samples]]
 

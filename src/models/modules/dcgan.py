@@ -1,6 +1,8 @@
 import torch
 import torch.nn as nn
 
+
+
 # custom weights initialization called on netG and netD
 def weights_init(m):
     classname = m.__class__.__name__
