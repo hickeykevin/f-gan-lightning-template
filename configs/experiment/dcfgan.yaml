@@ -18,7 +18,7 @@ seed: 42
 trainer:
     min_epochs: 1
     max_epochs: 50
-    gpus: 0
+    gpus: 1
 
 model:
     batch_size: ${datamodule.batch_size}
