@@ -12,8 +12,6 @@ import numpy as np
 import PIL
 from src.datamodules.multi_channel_mnist_datamodule import MNISTDataModule
 import wandb
-import ssl
-ssl._create_default_https_context = ssl._create_unverified_context
 
 
 # %%
@@ -81,6 +79,10 @@ class Discriminator(nn.Module):
         )
 
     def forward(self, x):
+        # If image is black & white (channel dimension = 1)
+        # Repeat the channel dimension to make it equal to 3 
+        if x.shape[1] != 3:
+            x = x.expand(-1, 3, -1, -1)
         return self.main(x)
 # %%
 g = Generator(3, 100)
