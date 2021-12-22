@@ -45,12 +45,12 @@ class MNISTDataModule(LightningDataModule):
                 transforms.Resize(64), 
                 transforms.ToTensor(), 
                 transforms.Normalize((0.1307,), (0.3081,)),
-                transforms.Lambda(lambda x: x.repeat(3, 1, 1))
+                #transforms.Lambda(lambda x: x.repeat(3, 1, 1))
             ]
         )
 
         # self.dims is returned when you call datamodule.size()
-        self.dims = (3, 28, 28)
+        self.dims = (1, 28, 28)
 
         self.data_train: Optional[Dataset] = None
         self.data_val: Optional[Dataset] = None
