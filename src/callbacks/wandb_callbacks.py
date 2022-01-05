@@ -5,6 +5,7 @@ from typing import List
 import matplotlib.pyplot as plt
 import seaborn as sn
 import torch
+from torchvision.transforms import Grayscale
 from torch.distributions.uniform import Uniform
 import wandb
 from pytorch_lightning import Callback, Trainer
@@ -323,7 +324,7 @@ class LogGeneratedImages(Callback):
             validation_z = pl_module.sample_z(trainer.datamodule.batch_size).to(device=pl_module.device)
 
             # run the batch through the network
-            generated_images = pl_module.forward(validation_z)
+            generated_images = Grayscale()(pl_module.forward(validation_z))
             discriminator_predictions = torch.sigmoid(pl_module.discriminator.forward(generated_images))
             image_predictions_zip = list(zip(generated_images, discriminator_predictions.flatten(1, -1)))
             

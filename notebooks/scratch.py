@@ -81,6 +81,7 @@ class Discriminator(nn.Module):
     def forward(self, x):
         # If image is black & white (channel dimension = 1)
         # Repeat the channel dimension to make it equal to 3 
+        # x.shape = (batch_size, num_channels, h, w)
         if x.shape[1] != 3:
             x = x.expand(-1, 3, -1, -1)
         return self.main(x)

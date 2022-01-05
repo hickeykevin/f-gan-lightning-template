@@ -10,4 +10,4 @@
 RUNPATH=/home/khickey/f-gan-lightning-template/
 cd $RUNPATH
 source f-gan-env/bin/activate
-PYTHONIOENCODING=utf8 python3 run.py experiment=dcfgan trainer.max_epochs=2
+PYTHONIOENCODING=utf8 python3 run.py experiment=dcfgan trainer.max_epochs=50
