@@ -4,8 +4,6 @@ from pytorch_lightning import LightningModule
 import torch
 from torch.distributions.uniform import Uniform
 from torchmetrics import Accuracy
-import ssl
-ssl._create_default_https_context = ssl._create_unverified_context
 
 
 class LitDCFGAN(LightningModule):

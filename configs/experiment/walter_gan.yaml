@@ -1,0 +1,41 @@
+# @package _global_
+
+defaults:
+  - override /trainer: f_gan.yaml
+  - override /model: walter_gan.yaml
+  - override /datamodule: walter_mnist_datamodule.yaml
+  - override /callbacks: null
+  - override /logger: wandb.yaml
+
+# all parameters below will be merged with parameters from default configurations set above
+# this allows you to overwrite only specified parameters
+
+seed: 42
+
+trainer:
+    min_epochs: 1
+    max_epochs: 50
+    gpus: 1
+
+callbacks:
+  upload_code_as_artifact:
+    _target_: src.callbacks.wandb_callbacks.UploadCodeAsArtifact
+    code_dir: ${work_dir}/src
+
+  upload_ckpts_as_artifact:
+    _target_: src.callbacks.wandb_callbacks.UploadCheckpointsAsArtifact
+    ckpt_dir: "checkpoints/"
+    upload_best_only: True
+  
+  log_generated_images:
+    _target_: src.callbacks.wandb_callbacks.LogGeneratedImages
+    num_samples: 8
+
+  watch_model_f_gan:
+    _target_: src.callbacks.wandb_callbacks.WatchModelFGan
+    log: "all"
+    log_freq: 100
+
+test_after_training: False
+
+name: walter_gan
