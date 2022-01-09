@@ -10,7 +10,7 @@ from torch.distributions.multivariate_normal import MultivariateNormal
 from torchvision.transforms import transforms
 import numpy as np
 import PIL
-from src.datamodules.multi_channel_mnist_datamodule import MNISTDataModule
+from src.datamodules.walter_mnist_datamodule import MNISTDataModule
 import wandb
 import math
 from src.models.modules.walter_work import *
@@ -36,7 +36,7 @@ PARAM = {
     'beta1' : 0.5,#Beta1 hyperparam for Adam optimizer
     'beta2' : 0.999,#Beta2 hyperparam for Adam optimizer
     #######Convolving Noise#############
-    'use_noise' : True,#Whether to convolve noise. Boolean. 
+    'use_noise' : False,#Whether to convolve noise. Boolean. 
     'noise_bandwidth' : 0.01,#covariance of convolved noise. Only applied if use_noise=True. 
     'noise_annealing' : 1.,#decay factor for convolved noise. Only applied if use_noise=True. 
     #######Wasserstein GAN############
@@ -233,32 +233,59 @@ class VLOSS(nn.Module):
     def forward(self,v):
         return torch.mean(self.activation(v))
 
-data = MNISTDataModule()
-data.prepare_data()
-data.setup(stage=None)
-X, y = next(iter(data.train_dataloader()))
+datamodeule = MNISTDataModule()
+datamodeule.prepare_data()
+datamodeule.setup(stage=None)
+data, y = next(iter(datamodeule.train_dataloader()))
 
 model = WalterGAN()    
 Q_criterion = QLOSS(divergence="JSD")
 V_criterion = VLOSS(divergence="JSD")
 
-noise = torch.randn(PARAM['bsize'], PARAM['nz'])
+if PARAM['use_disc_reg']:
+            reg_criterion = REGLOSS(PARAM['div'])
+            
 
 
 
 # %%
-fake_data = model.generator.forward(noise)
+z = torch.randn(PARAM['bsize'], PARAM['nz'])
+fake_data = model.generator.forward(z)
 
-v_fake = model.discriminator.forward(fake_data)
-loss_Q = -V_criterion(v_fake)
+if PARAM['use_noise'] == True:
+            annealed_bandwidth = PARAM['noise_bandwidth']*(PARAM['noise_annealing']**1)
+            noise_term = torch.randn(data.size()) * annealed_bandwidth
+            input_data = data + noise_term
+            noise_term = torch.randn(fake_data.size()) * annealed_bandwidth
+            input_fake = fake_data + noise_term
+else:
+    input_data = data
+    input_fake = fake_data
 
-output_real = model.discriminator(X)
-loss_real = -V_criterion(output_real)
+print(f"input data shape: {input_data.shape}")
+print(f"fake data shape: {fake_data.shape}")
 
-output_fake = model.discriminator.forward(fake_data)
-loss_fake = -Q_criterion(output_fake)
+    
+
+#%%
+# Discriminator output on real instances
+v = model.discriminator(input_data)
+loss_real = -V_criterion(v)
+#loss_real.backward(retain_graph=True)
+
+# Discriminator output on fake instances
+v_fake = model.discriminator.forward(input_fake)
+loss_fake = -Q_criterion(v_fake)
+#loss_fake.backward(retain_graph=True)
 
 loss_V = -(loss_real + loss_fake)
+
+if PARAM['use_disc_reg'] == True:
+    loss_V += PARAM['reg_gamma']*reg_criterion(model.discriminator, input_fake.detach())
+
+# Train generator
+v_fake = model.discriminator.forward(input_fake)
+loss_Q = -V_criterion(v_fake)
 
 #%%
 trainer.fit(model, datamodule=data)

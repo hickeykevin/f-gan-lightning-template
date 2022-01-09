@@ -15,7 +15,7 @@ PARAMS = {
     "dataset" : 'mnist',#Dataset. Options: cifar10, mnist 
     "exp_name" : 'mnist_score_test',#Name of experiment.
     'div' : 'JSD',#Divergence to use with f-gan. Choices: 'JSD', 'SQH', 'GAN, 'KLD', 'RKL', 'CHI', 'Wasserstein'
-    'model' : 'CNN',#Backbone model. Options: DCGAN, DCGAN_128, CNN
+    'model' : 'DCGAN',#Backbone model. Options: DCGAN, DCGAN_128, CNN
     "bsize" : 128,#Batch size during training.
     'nc' : 1,# Number of channles in the training images. For coloured images this is 3.
     'nz' : 100,# Size of the Z latent vector (the input to the generator).
@@ -26,7 +26,7 @@ PARAMS = {
     'beta1' : 0.5,#Beta1 hyperparam for Adam optimizer
     'beta2' : 0.999,#Beta2 hyperparam for Adam optimizer
     #######Convolving Noise#############
-    'use_noise' : True,#Whether to convolve noise. Boolean. 
+    'use_noise' : False,#Whether to convolve noise. Boolean. 
     'noise_bandwidth' : 0.01,#covariance of convolved noise. Only applied if use_noise=True. 
     'noise_annealing' : 1.,#decay factor for convolved noise. Only applied if use_noise=True. 
     #######Wasserstein GAN############
@@ -310,7 +310,7 @@ class V_DCGAN_128(nn.Module):
         return x
 
 class Activation_g(nn.Module):
-    def __init__(self,divergence="GAN"):
+    def __init__(self,divergence):
         super(Activation_g,self).__init__()
         self.divergence =divergence
     def forward(self,v):
@@ -329,7 +329,7 @@ class Activation_g(nn.Module):
             return -torch.log(1.0+torch.exp(-v)) # log sigmoid
 
 class Conjugate_f(nn.Module):
-    def __init__(self,divergence="GAN"):
+    def __init__(self,divergence):
         super(Conjugate_f,self).__init__()
         self.divergence = divergence
     def forward(self,t):
@@ -348,7 +348,7 @@ class Conjugate_f(nn.Module):
             return  -torch.log(1.0-torch.exp(t))
 
 class Conjugate_double_prime(nn.Module):
-    def __init__(self,divergence="GAN"):
+    def __init__(self,divergence):
         super(Conjugate_double_prime,self).__init__()
         self.divergence = divergence
     def forward(self,v):
@@ -403,7 +403,7 @@ class combined_T(nn.Module):
         return out.view(out.shape[0], 1)
 
 class REGLOSS(nn.Module):
-    def __init__(self,divergence="GAN"):
+    def __init__(self,divergence):
         super(REGLOSS,self).__init__()
         self.activation = Activation_g(divergence)
         self.f_double = Conjugate_double_prime(divergence)

@@ -114,7 +114,7 @@ class WalterGAN(LightningModule):
             #loss_real.backward(retain_graph=True)
             
             # Discriminator output on fake instances
-            v_fake = self.discriminator(input_fake.detach())
+            v_fake = self.discriminator(input_fake)
             loss_fake = -self.Q_criterion(v_fake)
             #loss_fake.backward()#maximize F
 
@@ -143,8 +143,8 @@ class WalterGAN(LightningModule):
                 p.data.clamp_(-self.params['c'], self.params['c'])
 
     def configure_optimizers(self):
-        optimizer_G = torch.optim.Adam(self.generator.parameters(), lr=self.hparams.lr, betas=(self.beta1, self.beta2))
-        optimizer_D = torch.optim.Adam(self.discriminator.parameters(), lr=self.hparams.lr, betas=(self.beta1, self.beta2))
+        optimizer_G = torch.optim.Adam(self.generator.parameters(), lr=self.hparams.lr, betas=(self.params['beta1'], self.params['beta2']))
+        optimizer_D = torch.optim.Adam(self.discriminator.parameters(), lr=self.hparams.lr, betas=(self.params['beta1'], self.params['beta2']))
         return [optimizer_G, optimizer_D]
 
     def sample_z(self):
