@@ -79,6 +79,8 @@ class WalterGAN(LightningModule):
         if self.params['use_disc_reg']:
             reg_criterion = REGLOSS(self.params['div'])
             self.reg_criterion = reg_criterion
+        
+        self.automatic_optimization = False
 
         self.d_accuracy_on_generated_instances = Accuracy(num_classes=1)
 
@@ -89,7 +91,7 @@ class WalterGAN(LightningModule):
         self.generator.apply(weights_init)
         self.discriminator.apply(weights_init)
 
-    def training_step(self, batch, batch_idx, optimizer_idx):
+    def training_step(self, batch, batch_idx):
         data, _ = batch
     
         z = self.sample_z().type_as(data)
@@ -105,37 +107,39 @@ class WalterGAN(LightningModule):
             input_data = data
             input_fake = fake_data
 
-        # Train discriminator
-        if optimizer_idx == 1:
+        g_opt, d_opt = self.optimizers()
 
-            # Discriminator output on real instances
-            v = self.discriminator(input_data)
-            loss_real = -self.V_criterion(v)
-            #loss_real.backward(retain_graph=True)
+        # Discriminator output on real instances
+        v = self.discriminator(input_data)
+        loss_real = -self.V_criterion(v)
+        #loss_real.backward(retain_graph=True)
             
-            # Discriminator output on fake instances
-            v_fake = self.discriminator(input_fake)
-            loss_fake = -self.Q_criterion(v_fake)
-            #loss_fake.backward()#maximize F
+        # Discriminator output on fake instances
+        v_fake = self.discriminator(input_fake)
+        loss_fake = -self.Q_criterion(v_fake)
+        #loss_fake.backward()#maximize F
 
-            loss_V = -(loss_real + loss_fake)
+        loss_V = -(loss_real + loss_fake)
 
-            if self.params['use_disc_reg'] == True:
-                loss_V += self.params['reg_gamma']*self.reg_criterion(self.discriminator, input_fake.detach())
+        if self.params['use_disc_reg'] == True:
+            loss_V += self.params['reg_gamma']*self.reg_criterion(self.discriminator, input_fake.detach())
 
-            self.log("train/V_loss", loss_V, on_epoch=True)
-            return {"loss": loss_V}
+        self.log("train/V_loss", loss_V, on_epoch=True)
+        d_opt.zero_grad()
+        self.manual_backward(loss_V, retain_graph=True)
+        d_opt.step()
         
-        # Train generator
-        if optimizer_idx == 0:
-
-            # Discrimator output on fake instances
-            v_fake = self.discriminator.forward(input_fake)
-            loss_Q = -self.V_criterion(v_fake)
-            self.log("train/Q_loss", loss_Q, on_epoch=True)
-            return {"loss": loss_Q}
-            
+        # Discrimator output on fake instances
+        v_fake = self.discriminator.forward(input_fake)
+        loss_Q = -self.V_criterion(v_fake)
+        self.log("train/Q_loss", loss_Q, on_epoch=True)
         
+        g_opt.zero_grad()
+        self.manual_backward(loss_Q)
+        g_opt.step()
+
+
+             
     def on_train_batch_end(self, outputs, batch, batch_idx, unused = 0) -> None:
         if self.params['div'] == 'Wasserstein':
             # Clip weights of discriminator
