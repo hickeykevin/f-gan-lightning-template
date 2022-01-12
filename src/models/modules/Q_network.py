@@ -1,73 +1,123 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from src.models.modules.loss_modules import conv_bn_layer, tconv_bn_layer, tconv_layer, conv_layer, fc_layer, fc_bn_layer
 
-class Q(nn.Module):
-  def __init__(self, latent_space: int):
-    super(Q, self).__init__()
-    self.latent_space = 100
-    self.c_dim = 1
-    self.gf_dim = 64
-    self.df_dim = 64
 
-    #layers
-    self.conv_bn_layer_1 = nn.Sequential(
-        nn.ConvTranspose2d(self.gf_dim*8, self.gf_dim*4, 4, stride=2, padding=1, bias=False), #set bias to none/false for each layer
-        nn.BatchNorm2d(self.gf_dim*4))
-
-    self.conv_bn_layer_2 = nn.Sequential(
-        nn.ConvTranspose2d(self.gf_dim*4, self.gf_dim*2, 4, stride=2, padding=1, bias=False),
-        nn.BatchNorm2d(self.gf_dim*2))
-
-    self.conv_bn_layer_3 = nn.Sequential(
-        nn.ConvTranspose2d(self.gf_dim*2, self.gf_dim, 4, stride=2, padding=1, bias=False),
-        nn.BatchNorm2d(self.gf_dim))    
+class Q_CNN(nn.Module):
+    def __init__(self, nz, ngf, nc, height=4, width=4, ):
+        super(Q_CNN,self).__init__()
+        self.nz = nz
+        self.ngf = ngf
+        self.height = height
+        self.width = width
+        
+        self.projection_z = fc_bn_layer(nz,height*width*ngf*8)
+        
+        self.theta_params = nn.Sequential(
+        tconv_bn_layer(self.ngf*8,self.ngf*4,4,stride=2,padding=1),
+                        nn.ReLU(),
+        tconv_bn_layer(self.ngf*4,self.ngf*2,4,stride=2,padding=1),
+                        nn.ReLU(),
+        tconv_bn_layer(self.ngf*2,self.ngf,4,stride=2,padding=1),
+                        nn.ReLU(),
+        tconv_layer(self.ngf, nc, 4,stride=2,padding=1),
+                        nn.Tanh()
+        )
     
-    self.tconv_layer = nn.ConvTranspose2d(self.gf_dim, self.c_dim, 4, stride=2, padding=1, bias=False)
+    def forward(self, x):
+        x = self.projection_z(x)
+        x = x.view(-1, self.ngf*8,self.height, self.width)
+        x = F.relu(x)
+        x =  self.theta_params(x)
+        return x
     
-    self.projection_z = nn.Sequential(
-        nn.Linear(self.latent_space, 4*4*self.gf_dim*8, bias=False),
-        nn.BatchNorm1d(4*4*self.gf_dim*8)
-    )
-
-  def forward(self, x):
-    x = F.relu(self.projection_z(x).view(-1, self.gf_dim*8, 4, 4))
-    x = F.relu(self.conv_bn_layer_1(x))
-    x = F.relu(self.conv_bn_layer_2(x))
-    x = F.relu(self.conv_bn_layer_3(x))
-    x = F.tanh(self.tconv_layer(x))
-    return x
-
-class Generator(nn.Module):
-    """ Generator. Input is noise, output is a generated image.
-    """
-    def __init__(self, image_size, hidden_dim, z_dim):
+class Q_DCGAN(nn.Module):  
+    def __init__(self, nz, ngf, nc):
         super().__init__()
-        self.linear = nn.Linear(z_dim, hidden_dim)
-        self.batch_norm = nn.BatchNorm1d(hidden_dim)
-        self.generate = nn.Linear(hidden_dim, image_size)
+        self.nz = nz
+        self.ngf = ngf
+        self.nc = nc
+
+        # Input is the latent vector Z.
+        self.tconv1 = nn.ConvTranspose2d(self.nz, self.ngf*8,
+            kernel_size=4, stride=1, padding=0, bias=False)
+        self.bn1 = nn.BatchNorm2d(self.ngf*8)
+
+        # Input Dimension: (ngf*8) x 4 x 4
+        self.tconv2 = nn.ConvTranspose2d(self.ngf*8, self.ngf*4,
+            4, 2, 1, bias=False)
+        self.bn2 = nn.BatchNorm2d(self.ngf*4)
+
+        # Input Dimension: (ngf*4) x 8 x 8
+        self.tconv3 = nn.ConvTranspose2d(self.ngf*4, self.ngf*2,
+            4, 2, 1, bias=False)
+        self.bn3 = nn.BatchNorm2d(self.ngf*2)
+
+        # Input Dimension: (ngf*2) x 16 x 16
+        self.tconv4 = nn.ConvTranspose2d(self.ngf*2, self.ngf,
+            4, 2, 1, bias=False)
+        self.bn4 = nn.BatchNorm2d(self.ngf)
+
+        # Input Dimension: (ngf) * 32 * 32
+        self.tconv5 = nn.ConvTranspose2d(self.ngf, self.nc,
+            4, 2, 1, bias=False)
+        #Output Dimension: (nc) x 64 x 64
 
     def forward(self, x):
-        activated = F.relu(self.batch_norm(self.linear(x)))
-        generation = torch.sigmoid(self.generate(activated))
-        return generation
+        x = F.relu(self.bn1(self.tconv1(x)))
+        x = F.relu(self.bn2(self.tconv2(x)))
+        x = F.relu(self.bn3(self.tconv3(x)))
+        x = F.relu(self.bn4(self.tconv4(x)))
 
-class GeneratorMultipleLayers(nn.Module):
-    """ Generator. Input is noise, output is a generated image.
-    """
-    def __init__(self, image_size, hidden_dim, z_dim):
+        x = F.tanh(self.tconv5(x))
+
+        return x
+    
+class Q_DCGAN_128(nn.Module):  
+    def __init__(self, nz, ngf, nc):
         super().__init__()
-        self.linear_one = nn.Linear(z_dim, hidden_dim)
-        self.linear_two = nn.Linear(hidden_dim, hidden_dim)
-        self.batch_norm = nn.BatchNorm1d(hidden_dim)
-        self.linear_three = nn.Linear(hidden_dim, image_size)
+        self.nz = nz
+        self.ngf = ngf
+        self.nc = nc
+        # Input is the latent vector Z.
+        self.tconv0 = nn.ConvTranspose2d(self.nz, self.ngf*16,
+            kernel_size=4, stride=1, padding=0, bias=False)
+        self.bn0 = nn.BatchNorm2d(self.ngf*16)
+        
+        # Input Dimension: (ngf*16) x 4 x 4
+        self.tconv1 = nn.ConvTranspose2d(self.ngf*16, self.ngf*8,
+            kernel_size=4, stride=2, padding=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(self.ngf*8)
+
+        # Input Dimension: (ngf*8) x 4 x 4
+        self.tconv2 = nn.ConvTranspose2d(self.ngf*8, self.ngf*4,
+            4, 2, 1, bias=False)
+        self.bn2 = nn.BatchNorm2d(self.ngf*4)
+
+        # Input Dimension: (ngf*4) x 8 x 8
+        self.tconv3 = nn.ConvTranspose2d(self.ngf*4, self.ngf*2,
+            4, 2, 1, bias=False)
+        self.bn3 = nn.BatchNorm2d(self.ngf*2)
+
+        # Input Dimension: (ngf*2) x 16 x 16
+        self.tconv4 = nn.ConvTranspose2d(self.ngf*2, self.ngf,
+            4, 2, 1, bias=False)
+        self.bn4 = nn.BatchNorm2d(self.ngf)
+
+        # Input Dimension: (ngf) * 32 * 32
+        self.tconv5 = nn.ConvTranspose2d(self.ngf, self.nc,
+            4, 2, 1, bias=False)
+        #Output Dimension: (nc) x 64 x 64
 
     def forward(self, x):
-        x = F.relu(self.batch_norm(self.linear_one(x)))
-        x = F.relu(self.batch_norm(self.linear_two(x)))
-        x = torch.sigmoid(self.linear_three(x))
+        x = F.relu(self.bn0(self.tconv0(x)))
+        x = F.relu(self.bn1(self.tconv1(x)))
+        x = F.relu(self.bn2(self.tconv2(x)))
+        x = F.relu(self.bn3(self.tconv3(x)))
+        x = F.relu(self.bn4(self.tconv4(x)))
+
+        x = F.tanh(self.tconv5(x))
+
         return x
 
-
-
-#taken from https://github.com/shayneobrien/generative-models/blob/74fbe414f81eaed29274e273f1fb6128abdb0ff5/src/f_gan.py

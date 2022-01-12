@@ -10,7 +10,7 @@ from torchvision.utils import save_image
 from torch.utils.data import Dataset
 import math
 
-# Parameters to define the model.
+# won't need this anymore, specify in lightning module init
 PARAMS = {
     "dataset" : 'mnist',#Dataset. Options: cifar10, mnist 
     "exp_name" : 'mnist_score_test',#Name of experiment.
@@ -44,7 +44,7 @@ if PARAMS['model'] == 'DCGAN_128':
 else:
     PARAMS['imsize']  = 64
 
-
+#moded to utils file
 def conv_bn_layer(in_channels,out_channels,kernel_size,stride=1,padding=0):
     return nn.Sequential(
         nn.Conv2d(in_channels,out_channels,kernel_size,stride=stride,padding=padding),
@@ -72,7 +72,7 @@ def fc_bn_layer(in_features,out_features):
         nn.BatchNorm1d(out_features)
     )
 
-
+#not needed, specify that in lightning module init
 def set_imsize_divisions(params) -> Dict:
 
     def conv_out_size_same(size, stride):
@@ -88,60 +88,64 @@ def set_imsize_divisions(params) -> Dict:
 
 SIZES = set_imsize_divisions(PARAMS)
 
+#moved to Q_network.py file
 class Q_CNN(nn.Module):
-    def __init__(self, params, layer_sizes):
+    def __init__(self, nz, ngf, nc, height=4, width=4, ):
         super(Q_CNN,self).__init__()
-        self.params = params
-        self.layer_sizes = layer_sizes
+        self.nz = nz
+        self.ngf = ngf
+        self.height = height
+        self.width = width
         
-        self.projection_z = fc_bn_layer(self.params['nz'],self.layer_sizes['s_h16']*self.layer_sizes['s_w16']*self.params['ngf']*8)
+        self.projection_z = fc_bn_layer(nz,height*width*ngf*8)
         
         self.theta_params = nn.Sequential(
-        tconv_bn_layer(self.params['ngf']*8,self.params['ngf']*4,4,stride=2,padding=1),
+        tconv_bn_layer(self.ngf*8,self.ngf*4,4,stride=2,padding=1),
                         nn.ReLU(),
-        tconv_bn_layer(self.params['ngf']*4,self.params['ngf']*2,4,stride=2,padding=1),
+        tconv_bn_layer(self.ngf*4,self.ngf*2,4,stride=2,padding=1),
                         nn.ReLU(),
-        tconv_bn_layer(self.params['ngf']*2,self.params['ngf'],4,stride=2,padding=1),
+        tconv_bn_layer(self.ngf*2,self.ngf,4,stride=2,padding=1),
                         nn.ReLU(),
-        tconv_layer(self.params['ngf'],self.params['nc'],4,stride=2,padding=1),
+        tconv_layer(self.ngf, nc, 4,stride=2,padding=1),
                         nn.Tanh()
         )
     
     def forward(self, x):
         x = self.projection_z(x)
-        x = x.view(-1,self.params['ngf']*8,self.layer_sizes['s_h16'],self.layer_sizes['s_w16'])
+        x = x.view(-1, self.ngf*8,self.height, self.width)
         x = F.relu(x)
-        #x = F.relu(self.projection_z(x).view(-1,self.params['ngf']*8,self.layer_sizes['s_h16'],self.layer_sizes['s_w16']))
         x =  self.theta_params(x)
         return x
     
 class Q_DCGAN(nn.Module):  
-    def __init__(self, params):
+    def __init__(self, nz, ngf, nc):
         super().__init__()
-        self.params = params
+        self.nz = nz
+        self.ngf = ngf
+        self.nc = nc
 
         # Input is the latent vector Z.
-        self.tconv1 = nn.ConvTranspose2d(self.params['nz'], self.params['ngf']*8,
+        self.tconv1 = nn.ConvTranspose2d(self.nz, self.ngf*8,
             kernel_size=4, stride=1, padding=0, bias=False)
-        self.bn1 = nn.BatchNorm2d(self.params['ngf']*8)
+        self.bn1 = nn.BatchNorm2d(self.ngf*8)
 
         # Input Dimension: (ngf*8) x 4 x 4
-        self.tconv2 = nn.ConvTranspose2d(self.params['ngf']*8, self.params['ngf']*4,
+        self.tconv2 = nn.ConvTranspose2d(self.ngf*8, self.ngf*4,
             4, 2, 1, bias=False)
-        self.bn2 = nn.BatchNorm2d(self.params['ngf']*4)
+        self.bn2 = nn.BatchNorm2d(self.ngf*4)
 
         # Input Dimension: (ngf*4) x 8 x 8
-        self.tconv3 = nn.ConvTranspose2d(self.params['ngf']*4, self.params['ngf']*2,
+        self.tconv3 = nn.ConvTranspose2d(self.ngf*4, self.ngf*2,
             4, 2, 1, bias=False)
-        self.bn3 = nn.BatchNorm2d(self.params['ngf']*2)
+        self.bn3 = nn.BatchNorm2d(self.ngf*2)
 
         # Input Dimension: (ngf*2) x 16 x 16
-        self.tconv4 = nn.ConvTranspose2d(self.params['ngf']*2, self.params['ngf'],
+        self.tconv4 = nn.ConvTranspose2d(self.ngf*2, self.ngf,
             4, 2, 1, bias=False)
-        self.bn4 = nn.BatchNorm2d(self.params['ngf'])
+        self.bn4 = nn.BatchNorm2d(self.ngf)
 
         # Input Dimension: (ngf) * 32 * 32
-        self.tconv5 = nn.ConvTranspose2d(self.params['ngf'], self.params['nc'],
+        self.tconv5 = nn.ConvTranspose2d(self.ngf, self.nc,
             4, 2, 1, bias=False)
         #Output Dimension: (nc) x 64 x 64
 
@@ -156,37 +160,38 @@ class Q_DCGAN(nn.Module):
         return x
     
 class Q_DCGAN_128(nn.Module):  
-    def __init__(self, params):
+    def __init__(self, nz, ngf, nc):
         super().__init__()
-        self.params = params
-
+        self.nz = nz
+        self.ngf = ngf
+        self.nc = nc
         # Input is the latent vector Z.
-        self.tconv0 = nn.ConvTranspose2d(self.params['nz'], self.params['ngf']*16,
+        self.tconv0 = nn.ConvTranspose2d(self.nz, self.ngf*16,
             kernel_size=4, stride=1, padding=0, bias=False)
-        self.bn0 = nn.BatchNorm2d(self.params['ngf']*16)
+        self.bn0 = nn.BatchNorm2d(self.ngf*16)
         
         # Input Dimension: (ngf*16) x 4 x 4
-        self.tconv1 = nn.ConvTranspose2d(self.params['ngf']*16, self.params['ngf']*8,
+        self.tconv1 = nn.ConvTranspose2d(self.ngf*16, self.ngf*8,
             kernel_size=4, stride=2, padding=1, bias=False)
-        self.bn1 = nn.BatchNorm2d(self.params['ngf']*8)
+        self.bn1 = nn.BatchNorm2d(self.ngf*8)
 
         # Input Dimension: (ngf*8) x 4 x 4
-        self.tconv2 = nn.ConvTranspose2d(self.params['ngf']*8, self.params['ngf']*4,
+        self.tconv2 = nn.ConvTranspose2d(self.ngf*8, self.ngf*4,
             4, 2, 1, bias=False)
-        self.bn2 = nn.BatchNorm2d(self.params['ngf']*4)
+        self.bn2 = nn.BatchNorm2d(self.ngf*4)
 
         # Input Dimension: (ngf*4) x 8 x 8
-        self.tconv3 = nn.ConvTranspose2d(self.params['ngf']*4, self.params['ngf']*2,
+        self.tconv3 = nn.ConvTranspose2d(self.ngf*4, self.ngf*2,
             4, 2, 1, bias=False)
-        self.bn3 = nn.BatchNorm2d(self.params['ngf']*2)
+        self.bn3 = nn.BatchNorm2d(self.ngf*2)
 
         # Input Dimension: (ngf*2) x 16 x 16
-        self.tconv4 = nn.ConvTranspose2d(self.params['ngf']*2, self.params['ngf'],
+        self.tconv4 = nn.ConvTranspose2d(self.ngf*2, self.ngf,
             4, 2, 1, bias=False)
-        self.bn4 = nn.BatchNorm2d(self.params['ngf'])
+        self.bn4 = nn.BatchNorm2d(self.ngf)
 
         # Input Dimension: (ngf) * 32 * 32
-        self.tconv5 = nn.ConvTranspose2d(self.params['ngf'], self.params['nc'],
+        self.tconv5 = nn.ConvTranspose2d(self.ngf, self.nc,
             4, 2, 1, bias=False)
         #Output Dimension: (nc) x 64 x 64
 
@@ -201,28 +206,24 @@ class Q_DCGAN_128(nn.Module):
 
         return x
 
-"""
-input : X ( data )
-output : R (scalar) logit
-
-parameters : w
-"""
+#moved to V_network.py file
 class V_CNN(nn.Module):
-    def __init__(self, params, layer_sizes):
+    def __init__(self, nc, ndf, height, width):
         super(V_CNN,self).__init__()
-        self.params = params
-        self.layer_sizes = layer_sizes
+        self.nc = nc
+        self.ndf = ndf
+        self.ndf = ndf
         self.w_params = nn.Sequential (
-            conv_layer(self.params['nc'],self.params['ndf'],4,stride=2,padding=1),
+            conv_layer(self.nc, self.ndf,4,stride=2,padding=1),
             nn.LeakyReLU(0.1),
-            conv_bn_layer(self.params['ndf'],self.params['ndf']*2,4,stride=2,padding=1),
+            conv_bn_layer(self.ndf,self.ndf*2,4,stride=2,padding=1),
             nn.LeakyReLU(0.1),
-            conv_bn_layer(self.params['ndf']*2,self.params['ndf']*4,4,stride=2,padding=1),
+            conv_bn_layer(self.ndf*2,self.ndf*4,4,stride=2,padding=1),
             nn.LeakyReLU(0.1),
-            conv_bn_layer(self.params['ndf']*4,self.params['ndf']*8,4,stride=2,padding=1),
+            conv_bn_layer(self.ndf*4,self.ndf*8,4,stride=2,padding=1),
             nn.LeakyReLU(0.1),
             nn.Flatten(1),
-            fc_layer(self.params['ndf']*8*self.layer_sizes['s_h16']*self.layer_sizes['s_w16'],1)
+            fc_layer(self.ndf * 8 * height * width,1)
         )
 
     def forward(self, x):
@@ -230,31 +231,32 @@ class V_CNN(nn.Module):
         return x
 
 class V_DCGAN(nn.Module):
-    def __init__(self, params):
+    def __init__(self, nc, ndf):
         super().__init__()
-        self.params = params
+        self.nc = nc
+        self.ndf = ndf
 
         # Input Dimension: (nc) x 64 x 64
-        self.conv1 = nn.Conv2d(self.params['nc'], self.params['ndf'],
+        self.conv1 = nn.Conv2d(self.nc, self.ndf,
             4, 2, 1, bias=False)
 
         # Input Dimension: (ndf) x 32 x 32
-        self.conv2 = nn.Conv2d(self.params['ndf'], self.params['ndf']*2,
+        self.conv2 = nn.Conv2d(self.ndf, self.ndf*2,
             4, 2, 1, bias=False)
-        self.bn2 = nn.BatchNorm2d(self.params['ndf']*2)
+        self.bn2 = nn.BatchNorm2d(self.ndf*2)
 
         # Input Dimension: (ndf*2) x 16 x 16
-        self.conv3 = nn.Conv2d(self.params['ndf']*2, self.params['ndf']*4,
+        self.conv3 = nn.Conv2d(self.ndf*2, self.ndf*4,
             4, 2, 1, bias=False)
-        self.bn3 = nn.BatchNorm2d(self.params['ndf']*4)
+        self.bn3 = nn.BatchNorm2d(self.ndf*4)
 
         # Input Dimension: (ndf*4) x 8 x 8
-        self.conv4 = nn.Conv2d(self.params['ndf']*4, self.params['ndf']*8,
+        self.conv4 = nn.Conv2d(self.ndf*4, self.ndf*8,
             4, 2, 1, bias=False)
-        self.bn4 = nn.BatchNorm2d(self.params['ndf']*8)
+        self.bn4 = nn.BatchNorm2d(self.ndf*8)
 
         # Input Dimension: (ndf*8) x 4 x 4
-        self.conv5 = nn.Conv2d(self.params['ndf']*8, 1, 4, 1, 0, bias=False)
+        self.conv5 = nn.Conv2d(self.ndf*8, 1, 4, 1, 0, bias=False)
 
     def forward(self, x):
         x = F.leaky_relu(self.conv1(x), 0.2, True)
@@ -267,36 +269,37 @@ class V_DCGAN(nn.Module):
         return x
     
 class V_DCGAN_128(nn.Module):
-    def __init__(self, params):
+    def __init__(self, nc, ndf):
         super().__init__()
-        self.params = params
+        self.nc = nc
+        self.ndf = ndf
 
         # Input Dimension: (nc) x 128 x 128
-        self.conv1 = nn.Conv2d(self.params['nc'], self.params['ndf'],
+        self.conv1 = nn.Conv2d(self.nc, self.ndf,
             4, 2, 1, bias=False)
 
         # Input Dimension: (ndf) x 64 x 64
-        self.conv2 = nn.Conv2d(self.params['ndf'], self.params['ndf']*2,
+        self.conv2 = nn.Conv2d(self.ndf, self.ndf*2,
             4, 2, 1, bias=False)
-        self.bn2 = nn.BatchNorm2d(self.params['ndf']*2)
+        self.bn2 = nn.BatchNorm2d(self.ndf*2)
 
         # Input Dimension: (ndf*2) x 32 x 32
-        self.conv3 = nn.Conv2d(self.params['ndf']*2, self.params['ndf']*4,
+        self.conv3 = nn.Conv2d(self.ndf*2, self.ndf*4,
             4, 2, 1, bias=False)
-        self.bn3 = nn.BatchNorm2d(self.params['ndf']*4)
+        self.bn3 = nn.BatchNorm2d(self.ndf*4)
 
         # Input Dimension: (ndf*4) x 16 x 16
-        self.conv4 = nn.Conv2d(self.params['ndf']*4, self.params['ndf']*8,
+        self.conv4 = nn.Conv2d(self.ndf*4, self.ndf*8,
             4, 2, 1, bias=False)
-        self.bn4 = nn.BatchNorm2d(self.params['ndf']*8)
+        self.bn4 = nn.BatchNorm2d(self.ndf*8)
 
         # Input Dimension: (ndf*8) x 8 x 8
-        self.conv5 = nn.Conv2d(self.params['ndf']*8, self.params['ndf']*16,
+        self.conv5 = nn.Conv2d(self.ndf*8, self.ndf*16,
             4, 2, 1, bias=False)
-        self.bn5 = nn.BatchNorm2d(self.params['ndf']*16)
+        self.bn5 = nn.BatchNorm2d(self.ndf*16)
         
         # Input Dimension: (ndf*8) x 4 x 4
-        self.conv6 = nn.Conv2d(self.params['ndf']*16, 1, 4, 1, 0, bias=False)
+        self.conv6 = nn.Conv2d(self.ndf*16, 1, 4, 1, 0, bias=False)
 
     def forward(self, x):
         x = F.leaky_relu(self.conv1(x), 0.2, True)
@@ -309,6 +312,7 @@ class V_DCGAN_128(nn.Module):
 
         return x
 
+# moved to utils.py
 class Activation_g(nn.Module):
     def __init__(self,divergence):
         super(Activation_g,self).__init__()
@@ -328,6 +332,7 @@ class Activation_g(nn.Module):
         elif divergence == "GAN":
             return -torch.log(1.0+torch.exp(-v)) # log sigmoid
 
+# moved to utils.py
 class Conjugate_f(nn.Module):
     def __init__(self,divergence):
         super(Conjugate_f,self).__init__()
@@ -347,6 +352,7 @@ class Conjugate_f(nn.Module):
         elif divergence == "GAN":
             return  -torch.log(1.0-torch.exp(t))
 
+#moved to utils.py
 class Conjugate_double_prime(nn.Module):
     def __init__(self,divergence):
         super(Conjugate_double_prime,self).__init__()
@@ -365,7 +371,8 @@ class Conjugate_double_prime(nn.Module):
             return 2*(torch.exp(v))/((2-torch.exp(v))**2)
         elif divergence == "GAN":
             return  (torch.exp(v))/((1-torch.exp(v))**2)
-        
+
+#moved to utils.py        
 class net_with_flat_input(nn.Module): 
     def __init__(self,net, original_shape):
         super(net_with_flat_input,self).__init__()
@@ -375,7 +382,8 @@ class net_with_flat_input(nn.Module):
         x = x.view(self.original_shape)
         out = self.net(x)
         return out.view(out.shape[0], 1)
-    
+
+#moved to utils.py    
 def compute_delta_x(net, x):
     original_shape = x.shape
     delta_x = torch.autograd.functional.jacobian(net, x, create_graph=True)
@@ -391,6 +399,7 @@ def compute_delta_x(net, x):
 #     def forward(self,x):
 #         return self.activation(self.disc(x))
 
+#moved to utils.py
 class combined_T(nn.Module):
     def __init__(self,disc, activation, original_shape):
         super(combined_T,self).__init__()
@@ -402,6 +411,7 @@ class combined_T(nn.Module):
         out = self.activation(self.disc(x))
         return out.view(out.shape[0], 1)
 
+#moved to loss_modules.py
 class REGLOSS(nn.Module):
     def __init__(self,divergence):
         super(REGLOSS,self).__init__()
@@ -446,6 +456,7 @@ class Wasserstein_QLOSS(nn.Module):
     def forward(self,v):
         return -torch.mean(v)
 
+#moved to walter_gan.py file (in lightningmodule)
 def weights_init(m):
     classname = m.__class__.__name__
     if classname.find('Conv')!=-1 or classname.find('Linear')!=-1:
